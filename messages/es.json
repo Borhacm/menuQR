@@ -1,0 +1,183 @@
+{
+  "Nav": {
+    "home": "Inicio",
+    "solutions": "Soluciones",
+    "pricing": "Precios",
+    "faq": "F.A.Q",
+    "contacts": "Contacto",
+    "blog": "Blog",
+    "signIn": "Entrar",
+    "signUp": "Crear cuenta",
+    "dashboard": "Panel"
+  },
+  "Hero": {
+    "badge": "Menús QR con IA",
+    "title": "Menús QR multilingües para restaurantes modernos",
+    "subtitle": "Crea menús digitales traducidos con IA, subdominios personalizados, plantillas preciosas y escaneos ilimitados. Plan gratuito disponible — en vivo en minutos.",
+    "ctaPrimary": "Empezar gratis",
+    "ctaSecondary": "Ver precios",
+    "trustedBy": "Cientos de restaurantes en todo el mundo confían en nosotros"
+  },
+  "Features": {
+    "eyebrow": "Todo lo que necesitas para lanzar un menú digital en minutos",
+    "title": "Características clave de nuestra solución",
+    "items": {
+      "domain": {
+        "title": "Subdominio QR personalizado",
+        "description": "Combina tu marca con uno de nuestros 20+ dominios cortos para crear una dirección única para tu menú QR."
+      },
+      "management": {
+        "title": "Gestión de menú sencilla",
+        "description": "Añade, ordena y edita ítems con controles intuitivos. Nuestra IA construye tu menú a partir de imágenes."
+      },
+      "analytics": {
+        "title": "Analíticas de menú online",
+        "description": "Gráficos en tiempo real de escaneos QR y visitas, con rankings por idioma, dispositivo y visitantes recurrentes."
+      },
+      "templates": {
+        "title": "Plantillas flexibles",
+        "description": "Múltiples plantillas, totalmente personalizables. Cambia colores, fuentes y fondos para igualar tu marca."
+      },
+      "multilingual": {
+        "title": "Menú multilingüe",
+        "description": "Traducido automáticamente con IA entrenada en contexto culinario. Activa idiomas y ajusta traducciones manualmente."
+      },
+      "media": {
+        "title": "CDN global de imágenes",
+        "description": "Almacenamiento distribuido con CDN. Cada imagen se prepara en WebP y variantes responsive para cada dispositivo."
+      },
+      "currency": {
+        "title": "Menú multimoneda",
+        "description": "Muestra precios en varias monedas a la vez. Añade precios por porción, tamaño o monedas alternativas."
+      },
+      "qr": {
+        "title": "Generador de códigos QR",
+        "description": "Generador integrado con logo, colores y estilos. Descarga PNG, SVG o PDF listos para imprimir."
+      }
+    }
+  },
+  "Templates": {
+    "eyebrow": "Capturas",
+    "title": "Diseños y plantillas de menú",
+    "subtitle": "Descubre cómo puede verse tu menú QR en distintas plantillas."
+  },
+  "Trust": {
+    "eyebrow": "Sobre nosotros",
+    "title": "Por qué los restaurantes confían en Menuly",
+    "intro": "Más allá de un menú digital básico: herramientas creadas con feedback real, desde menús QR multilingües hasta acceso global ultrarrápido.",
+    "items": [
+      {
+        "title": "Traducción AI superior",
+        "description": "IA entrenada en contexto culinario para traducciones precisas y naturales."
+      },
+      {
+        "title": "Páginas web personalizadas",
+        "description": "Destaca con un menú alojado en un dominio corto y memorable."
+      },
+      {
+        "title": "Plantillas customizables",
+        "description": "Plantillas elegantes y responsive con control total sobre fuentes, colores y layouts."
+      },
+      {
+        "title": "Escaneos y vistas ilimitadas",
+        "description": "Sin tarifas ocultas. Tu suscripción cubre vistas, escaneos e interacciones ilimitadas."
+      },
+      {
+        "title": "Acceso global ultrarrápido",
+        "description": "Infraestructura distribuida para que tu menú cargue al instante en cualquier parte del mundo."
+      },
+      {
+        "title": "Innovación continua",
+        "description": "Nuevas funciones regularmente, basadas en el feedback de nuestros clientes."
+      }
+    ]
+  },
+  "Steps": {
+    "eyebrow": "Pasos sencillos para",
+    "title": "Unirte a nuestra plataforma",
+    "items": [
+      {
+        "title": "Registro",
+        "description": "Regístrate, elige un plan y añade un método de pago para tu suscripción mensual."
+      },
+      {
+        "title": "Crea tu página",
+        "description": "Configura tu negocio, elige un dominio corto y construye tu menú con categorías e ítems."
+      },
+      {
+        "title": "Genera e imprime QR",
+        "description": "Genera un código QR e imprímelo en cualquier superficie de tu local."
+      }
+    ]
+  },
+  "Pricing": {
+    "eyebrow": "Elige tu plan Menuly",
+    "title": "Planes de precios flexibles",
+    "subtitle": "Empieza gratis, mejora cuando quieras. Sin tarifas ocultas.",
+    "perMonth": "/ mes",
+    "vat": "+ IVA",
+    "trial": "Prueba {days} días",
+    "cta": "Seleccionar"
+  },
+  "FAQ": {
+    "eyebrow": "Preguntas frecuentes",
+    "title": "Preguntas frecuentes sobre la creación del menú",
+    "items": [
+      {
+        "q": "¿Qué es un menú QR digital?",
+        "a": "Es una versión online de tu menú accesible al escanear un código QR. Los clientes lo ven en su móvil."
+      },
+      {
+        "q": "¿Cuánto cuesta la suscripción?",
+        "a": "Menuly ofrece un plan gratuito con hasta 25 ítems, tráfico ilimitado y sin anuncios. Los planes Standard empiezan en 9,99 €/mes."
+      },
+      {
+        "q": "¿Puedo usar mi propio subdominio?",
+        "a": "Sí. Elige un slug único bajo nuestros dominios cortos (p. ej. 'cafe.menuly.app') para una dirección elegante y fácil de recordar."
+      },
+      {
+        "q": "¿Soportan menús multilingües?",
+        "a": "Por supuesto. Tu menú se traduce automáticamente a los idiomas que actives, y puedes ajustar las traducciones manualmente."
+      },
+      {
+        "q": "¿Puedo personalizar el diseño?",
+        "a": "Sí, tienes control total. Elige plantillas responsive y personaliza fuentes, colores e imágenes."
+      },
+      {
+        "q": "¿Hay límite de vistas o tráfico?",
+        "a": "No. Todos los planes incluyen vistas, escaneos e interacciones ilimitadas."
+      },
+      {
+        "q": "¿Qué pasa si cancelo la suscripción?",
+        "a": "Tu menú permanece online un periodo de gracia. Después tu subdominio queda disponible de nuevo."
+      },
+      {
+        "q": "¿Por qué indicar alérgenos?",
+        "a": "Para que los clientes eviten ingredientes que les afecten. Algunas plantillas permiten filtrar ítems por alérgeno."
+      },
+      {
+        "q": "¿Puedo cambiar mi dominio?",
+        "a": "Sí, cuando quieras. Recuerda que los QR ya impresos seguirán apuntando al antiguo, tendrás que imprimir nuevos."
+      },
+      {
+        "q": "¿Puedo crear varios códigos QR?",
+        "a": "Sí, ilimitados. Personaliza colores, logos y estilos. Todos llevan a tu página."
+      }
+    ]
+  },
+  "Newsletter": {
+    "title": "Suscríbete a las novedades",
+    "placeholder": "tu@email.com",
+    "cta": "Suscribir",
+    "success": "¡Gracias! Te avisamos."
+  },
+  "Footer": {
+    "rights": "Todos los derechos reservados.",
+    "links": "Enlaces",
+    "solutions": "Soluciones",
+    "company": "Empresa",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio",
+    "legal": "Legal"
+  }
+}

@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: menuly-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: menuly
+      POSTGRES_PASSWORD: menuly
+      POSTGRES_DB: menuly
+    ports:
+      - "5433:5432"
+    volumes:
+      - menuly_pgdata:/var/lib/postgresql/data
+
+volumes:
+  menuly_pgdata:

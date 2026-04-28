@@ -1,0 +1,384 @@
+// Menuly database schema
+// Tenant model: User -> Membership -> Organization -> Resource(s) -> Menus -> Categories -> Items
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// AUTH (Auth.js v5 with Prisma adapter)
+// =============================================================================
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String       @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  memberships Membership[]
+  invites     OrgInvite[] @relation("invitedBy")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =============================================================================
+// TENANCY
+// =============================================================================
+
+enum Role {
+  OWNER
+  MANAGER
+}
+
+model Organization {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  planId           String        @default("free")
+  stripeCustomerId String?       @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  memberships  Membership[]
+  resources    Resource[]
+  invites      OrgInvite[]
+  subscription Subscription?
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(MANAGER)
+  createdAt      DateTime     @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model OrgInvite {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String
+  role           Role         @default(MANAGER)
+  token          String       @unique
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy    User         @relation("invitedBy", fields: [invitedById], references: [id])
+
+  @@index([organizationId])
+}
+
+// =============================================================================
+// BILLING
+// =============================================================================
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  organizationId       String             @unique
+  planId               String
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// RESOURCE (a tenant's "business page" with subdomain + branding)
+// =============================================================================
+
+model Resource {
+  id              String   @id @default(cuid())
+  organizationId  String
+  slug            String   @unique
+  name            String
+  description     String?
+  logoUrl         String?
+  contactEmail    String?
+  contactPhone    String?
+  contactAddress  String?
+  socialJson      Json?
+  templateId      String   @default("classic")
+  themeJson       Json?
+  enabledLocales  String[] @default(["en"])
+  enabledCurrencies String[] @default(["EUR"])
+  defaultLocale   String   @default("en")
+  defaultCurrency String   @default("EUR")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  menus        Menu[]
+  qrDesigns    QrDesign[]
+  events       AnalyticsEvent[]
+
+  @@index([organizationId])
+}
+
+// =============================================================================
+// MENU CONTENT
+// =============================================================================
+
+model Menu {
+  id         String     @id @default(cuid())
+  resourceId String
+  name       String
+  position   Int        @default(0)
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  resource   Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  categories Category[]
+
+  @@index([resourceId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  menuId    String
+  name      String
+  description String?
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menu  Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  items Item[]
+
+  @@index([menuId])
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  categoryId  String
+  name        String
+  description String?
+  position    Int      @default(0)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  isVegan     Boolean  @default(false)
+  isVegetarian Boolean @default(false)
+  isGlutenFree Boolean @default(false)
+  isSpicy     Boolean  @default(false)
+  calories    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  prices     ItemPrice[]
+  images     ItemImage[]
+  allergens  ItemAllergen[]
+
+  @@index([categoryId])
+}
+
+model ItemPrice {
+  id       String  @id @default(cuid())
+  itemId   String
+  label    String? // e.g. "Small", "Large", "Glass", "Bottle"
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("EUR")
+  position Int     @default(0)
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
+
+model ItemImage {
+  id       String  @id @default(cuid())
+  itemId   String
+  url      String
+  alt      String?
+  position Int     @default(0)
+  width    Int?
+  height   Int?
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
+
+model Allergen {
+  id    String @id @default(cuid())
+  code  String @unique
+  name  String
+  icon  String?
+
+  items ItemAllergen[]
+}
+
+model ItemAllergen {
+  itemId     String
+  allergenId String
+
+  item     Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, allergenId])
+}
+
+// =============================================================================
+// TRANSLATIONS
+// =============================================================================
+
+enum TranslationSource {
+  AI
+  MANUAL
+}
+
+enum TranslationEntity {
+  RESOURCE
+  MENU
+  CATEGORY
+  ITEM
+  ITEM_PRICE
+}
+
+model Translation {
+  id         String            @id @default(cuid())
+  entityType TranslationEntity
+  entityId   String
+  locale     String
+  field      String
+  value      String            @db.Text
+  source     TranslationSource @default(AI)
+  updatedAt  DateTime          @updatedAt
+
+  @@unique([entityType, entityId, locale, field])
+  @@index([entityType, entityId])
+}
+
+enum TranslationJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+model TranslationJob {
+  id         String               @id @default(cuid())
+  resourceId String
+  payload    Json
+  status     TranslationJobStatus @default(PENDING)
+  error      String?
+  createdAt  DateTime             @default(now())
+  finishedAt DateTime?
+
+  @@index([resourceId, status])
+}
+
+// =============================================================================
+// QR
+// =============================================================================
+
+model QrDesign {
+  id         String   @id @default(cuid())
+  resourceId String
+  name       String   @default("Default")
+  configJson Json
+  assetUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+}
+
+// =============================================================================
+// ANALYTICS
+// =============================================================================
+
+enum AnalyticsType {
+  SCAN
+  VIEW
+}
+
+model AnalyticsEvent {
+  id          String        @id @default(cuid())
+  resourceId  String
+  type        AnalyticsType
+  locale      String?
+  device      String?
+  isReturning Boolean       @default(false)
+  ipHash      String?
+  ts          DateTime      @default(now())
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId, ts])
+  @@index([resourceId, type, ts])
+}
+
+model NewsletterSubscriber {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  locale     String?  @default("en")
+  createdAt  DateTime @default(now())
+}
