@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("landing renders and links to auth", async ({ page }) => {
   await page.goto("/en");
   await expect(page.getByRole("heading", { name: /multilingual qr menus/i })).toBeVisible();
-  await page.getByRole("link", { name: /start free|empezar gratis/i }).first().click();
+  await page.getByRole("link", { name: /sign up|crear cuenta/i }).first().click();
   await expect(page).toHaveURL(/\/register$/);
 });
 

@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
+import { logEvent, metricIncr } from "@/lib/observability";
 
 const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 const MIME_EXT: Record<string, string> = {
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
     windowMs: 10 * 60 * 1000,
   });
   if (!rl.allowed) {
+    metricIncr("upload_rate_limited_total");
     return NextResponse.json({ error: "Too many upload requests" }, { status: 429 });
   }
 
@@ -44,6 +46,13 @@ export async function POST(req: Request) {
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, fileName), buffer);
+  metricIncr("upload_success_total");
+  logEvent("info", "upload.success", {
+    userId: session.user.id,
+    fileName,
+    mime: file.type,
+    size: file.size,
+  });
 
   return NextResponse.json({ url: `/uploads/${fileName}` });
 }

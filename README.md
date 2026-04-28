@@ -64,6 +64,23 @@ npx tsc --noEmit
 npm run test:e2e
 ```
 
+## Observability (Prometheus + Grafana)
+
+1. Start app (`npm run dev`) on `:3000`.
+2. (Optional) set `METRICS_TOKEN` in `.env` if you want to protect metrics endpoints.
+3. Start monitoring stack:
+
+```bash
+docker compose -f docker-compose.observability.yml up -d
+```
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001` (`admin` / `admin`)
+- App metrics (JSON): `/api/internal/metrics`
+- App metrics (Prometheus): `/api/internal/metrics/prometheus`
+
+If you set `METRICS_TOKEN`, update `authorization.credentials` in `monitoring/prometheus.yml` to match.
+
 ## Production notes (incremental path)
 
 - Deploy to Vercel

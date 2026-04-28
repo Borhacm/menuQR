@@ -382,3 +382,17 @@ model NewsletterSubscriber {
   locale     String?  @default("en")
   createdAt  DateTime @default(now())
 }
+
+model WebhookReceipt {
+  id          String   @id @default(cuid())
+  provider    String
+  eventId     String
+  eventType   String
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+  status      String   @default("RECEIVED")
+  error       String?
+
+  @@unique([provider, eventId])
+  @@index([provider, eventType])
+}

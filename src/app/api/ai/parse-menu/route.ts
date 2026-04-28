@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { openai } from "@/lib/ai/client";
 import { auth } from "@/auth";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
+import { logEvent, metricIncr } from "@/lib/observability";
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     windowMs: 10 * 60 * 1000,
   });
   if (!rl.allowed) {
+    metricIncr("ai_parse_rate_limited_total");
     return NextResponse.json({ error: "Too many parse requests" }, { status: 429 });
   }
 
@@ -34,6 +36,7 @@ export async function POST(req: Request) {
   }
 
   if (!process.env.OPENAI_API_KEY) {
+    metricIncr("ai_parse_mock_total");
     return NextResponse.json({
       categories: [
         {
@@ -71,5 +74,11 @@ export async function POST(req: Request) {
   });
 
   const payload = completion.choices[0]?.message?.content;
+  metricIncr("ai_parse_success_total");
+  logEvent("info", "ai.parse.success", {
+    userId: session.user.id,
+    mime,
+    size: image.size,
+  });
   return NextResponse.json(payload ? JSON.parse(payload) : { categories: [] });
 }
