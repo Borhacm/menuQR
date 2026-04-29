@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe/client";
+import { getStripeClient } from "@/lib/stripe/client";
 import { db } from "@/lib/db";
 import { logEvent, metricIncr } from "@/lib/observability";
 
@@ -26,27 +26,31 @@ function mapStripeStatus(
 }
 
 function inferPlanIdFromPrice(priceId: string | null | undefined) {
-  if (!priceId) return "standard";
+  if (!priceId) return "starter";
   if (
-    process.env.STRIPE_PRICE_STANDARD_PLUS &&
-    priceId === process.env.STRIPE_PRICE_STANDARD_PLUS
+    (process.env.STRIPE_PRICE_PRO && priceId === process.env.STRIPE_PRICE_PRO) ||
+    (process.env.STRIPE_PRICE_STANDARD_PLUS && priceId === process.env.STRIPE_PRICE_STANDARD_PLUS)
   ) {
-    return "standard_plus";
+    return "pro";
   }
-  if (process.env.STRIPE_PRICE_STANDARD && priceId === process.env.STRIPE_PRICE_STANDARD) {
-    return "standard";
+  if (
+    (process.env.STRIPE_PRICE_STARTER && priceId === process.env.STRIPE_PRICE_STARTER) ||
+    (process.env.STRIPE_PRICE_STANDARD && priceId === process.env.STRIPE_PRICE_STANDARD)
+  ) {
+    return "starter";
   }
-  return "standard";
+  return "starter";
 }
 
 export async function POST(req: NextRequest) {
   metricIncr("stripe_webhook_requests_total");
   const signature = req.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!signature || !secret) {
+  if (!signature || !secret || !process.env.STRIPE_SECRET_KEY) {
     metricIncr("stripe_webhook_invalid_total");
     return NextResponse.json({ error: "Missing webhook setup" }, { status: 400 });
   }
+  const stripe = getStripeClient();
 
   const body = await req.text();
   let event: Stripe.Event;
@@ -95,7 +99,7 @@ export async function POST(req: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const orgId = session.metadata?.organizationId;
-      const planId = session.metadata?.planId ?? "standard";
+      const planId = session.metadata?.planId ?? "starter";
       const customerId = typeof session.customer === "string" ? session.customer : null;
       if (orgId) {
         await db.organization.update({

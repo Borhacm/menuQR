@@ -1,64 +1,59 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 
 const TEMPLATES = [
   {
+    id: "classic",
     name: "Classic",
-    palette: "from-amber-100 via-orange-100 to-rose-100",
-    accent: "bg-orange-500",
+    shellClass: "from-amber-50 via-orange-50 to-rose-50",
+    phoneClass: "bg-[#f5f1ea] text-zinc-900",
+    frameClass: "border-zinc-400/40",
+    chipClass: "border-zinc-500/40 bg-[#f2ede4]",
+    cardClass: "border-zinc-500/40 bg-[#f7f3ec]",
+    accentClass: "text-amber-700",
+    featuredCardClass: "border-zinc-500/40 bg-[#f7f3ec]",
+    titleClass: "text-zinc-900",
+    metaClass: "text-zinc-600",
+    bodyClass: "text-zinc-600",
   },
   {
+    id: "modern",
     name: "Modern",
-    palette: "from-zinc-900 via-zinc-800 to-zinc-700",
-    accent: "bg-zinc-100",
-    dark: true,
+    shellClass: "from-zinc-950 via-zinc-900 to-zinc-900",
+    phoneClass: "bg-zinc-950 text-zinc-100",
+    frameClass: "border-zinc-600/80",
+    chipClass: "border-zinc-600/70 bg-zinc-900/60",
+    cardClass: "border-zinc-600/70 bg-zinc-900/60",
+    accentClass: "text-primary",
+    featuredCardClass: "border-zinc-600/80 bg-zinc-900/75",
+    titleClass: "text-zinc-100",
+    metaClass: "text-zinc-500",
+    bodyClass: "text-zinc-400",
   },
   {
-    name: "Botanical",
-    palette: "from-emerald-100 via-teal-100 to-emerald-200",
-    accent: "bg-emerald-600",
-  },
-  {
-    name: "Bistro",
-    palette: "from-rose-100 via-rose-200 to-amber-100",
-    accent: "bg-rose-600",
-  },
-  {
-    name: "Minimal",
-    palette: "from-zinc-50 via-white to-zinc-100",
-    accent: "bg-zinc-900",
-  },
-  {
-    name: "Sea",
-    palette: "from-sky-100 via-cyan-100 to-blue-100",
-    accent: "bg-sky-600",
-  },
-  {
-    name: "Sunset",
-    palette: "from-orange-200 via-pink-200 to-purple-200",
-    accent: "bg-pink-600",
-  },
-  {
-    name: "Mocha",
-    palette: "from-stone-200 via-stone-300 to-stone-400",
-    accent: "bg-stone-800",
+    id: "grid",
+    name: "Grid",
+    shellClass: "from-indigo-950 via-blue-950 to-zinc-950",
+    phoneClass: "bg-[#070b1a] text-slate-100",
+    frameClass: "border-blue-300/25",
+    chipClass: "border-blue-200/30 bg-[#0f1730]",
+    cardClass: "border-blue-200/30 bg-[#0f1730]",
+    accentClass: "text-cyan-300",
+    featuredCardClass: "border-blue-200/35 bg-[#111a36]",
+    titleClass: "text-slate-100",
+    metaClass: "text-slate-400",
+    bodyClass: "text-slate-300",
   },
 ];
 
 export function TemplatesCarousel() {
   const t = useTranslations("Templates");
   const ref = useRef<HTMLDivElement>(null);
-
-  function scroll(dir: "left" | "right") {
-    if (!ref.current) return;
-    const w = ref.current.clientWidth;
-    ref.current.scrollBy({ left: dir === "left" ? -w * 0.7 : w * 0.7, behavior: "smooth" });
-  }
 
   return (
     <section className="bg-muted/30 py-20 lg:py-28">
@@ -73,32 +68,36 @@ export function TemplatesCarousel() {
           <p className="mt-4 max-w-2xl text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <div className="relative mt-12">
+        <div className="mt-12">
           <div
             ref={ref}
             className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {TEMPLATES.map((tpl, i) => (
               <motion.div
-                key={tpl.name}
+                key={tpl.id}
                 initial={{ opacity: 0, scale: 0.96 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.03 }}
                 className="snap-start shrink-0 w-[260px] sm:w-[300px]"
               >
-                <TemplateCard name={tpl.name} palette={tpl.palette} accent={tpl.accent} dark={tpl.dark} />
+                <TemplateCard
+                  id={tpl.id}
+                  name={tpl.name}
+                  shellClass={tpl.shellClass}
+                  phoneClass={tpl.phoneClass}
+                  frameClass={tpl.frameClass}
+                  chipClass={tpl.chipClass}
+                  cardClass={tpl.cardClass}
+                  accentClass={tpl.accentClass}
+                  featuredCardClass={tpl.featuredCardClass}
+                  titleClass={tpl.titleClass}
+                  metaClass={tpl.metaClass}
+                  bodyClass={tpl.bodyClass}
+                />
               </motion.div>
             ))}
-          </div>
-
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => scroll("left")} aria-label="Previous">
-              <ChevronLeft />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => scroll("right")} aria-label="Next">
-              <ChevronRight />
-            </Button>
           </div>
         </div>
       </div>
@@ -107,42 +106,134 @@ export function TemplatesCarousel() {
 }
 
 function TemplateCard({
+  id,
   name,
-  palette,
-  accent,
-  dark,
+  phoneClass,
+  shellClass,
+  frameClass,
+  chipClass,
+  cardClass,
+  accentClass,
+  featuredCardClass,
+  titleClass,
+  metaClass,
+  bodyClass,
 }: {
+  id: string;
   name: string;
-  palette: string;
-  accent: string;
-  dark?: boolean;
+  shellClass: string;
+  phoneClass: string;
+  frameClass: string;
+  chipClass: string;
+  cardClass: string;
+  accentClass: string;
+  featuredCardClass: string;
+  titleClass: string;
+  metaClass: string;
+  bodyClass: string;
 }) {
+  const t = useTranslations("Templates");
+  const phoneT = useTranslations("Hero.preview.phone");
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
-      <div
-        className={`aspect-[3/5] bg-gradient-to-b ${palette} relative ${dark ? "text-white" : "text-zinc-900"}`}
-      >
-        <div className="absolute inset-x-0 top-0 p-5">
-          <div className="text-[10px] uppercase tracking-widest opacity-70">Menu</div>
-          <div className="mt-1 font-display text-2xl font-bold">{name}</div>
-        </div>
-        <div className="absolute inset-x-3 bottom-3 space-y-2">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className={`flex items-center justify-between rounded-md px-3 py-2 text-xs backdrop-blur ${
-                dark ? "bg-white/10" : "bg-white/70"
-              }`}
-            >
-              <span className="font-medium">Dish {i + 1}</span>
-              <span className={`h-2 w-10 rounded-full ${accent}`} />
+    <Link
+      href={`/preview/templates/${id}`}
+      className="group block transition-all hover:-translate-y-0.5"
+    >
+      <div className={`relative aspect-[3/5] overflow-hidden ${shellClass}`}>
+        <div className={`h-full rounded-[1.8rem] border p-3 ${phoneClass} ${frameClass}`}>
+          <div className="mx-auto mb-3 h-1 w-16 rounded-full bg-zinc-700/80" />
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className={`text-[10px] uppercase tracking-widest ${metaClass}`}>{t("menuLabel")}</p>
+              <p className={`mt-1 text-2xl font-bold leading-none ${titleClass}`}>La Trattoria</p>
             </div>
-          ))}
+            <span className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${chipClass} ${titleClass}`}>
+              ES
+            </span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {["category1", "category2", "category3", "category4"].map((key) => (
+              <div
+                key={key}
+                className={`rounded-xl border px-2 py-1.5 text-center text-xs font-medium ${chipClass} ${titleClass}`}
+              >
+                {phoneT(key)}
+              </div>
+            ))}
+          </div>
+
+          {id === "grid" ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {[
+                { img: "/images/dishes/bruschetta.jpg", name: "Bruschetta", price: "€7.20" },
+                { img: "/images/dishes/caprese.jpg", name: "Caprese", price: "€9.80" },
+                { img: "/images/dishes/risotto.jpg", name: "Risotto", price: "€16.50" },
+                { img: "/images/dishes/tiramisu.jpg", name: "Tiramisù", price: "€6.50" },
+              ].map((item) => (
+                <article key={item.name} className={`overflow-hidden rounded-xl border p-1.5 ${cardClass}`}>
+                  <Image
+                    src={item.img}
+                    alt={item.name}
+                    width={320}
+                    height={240}
+                    className="aspect-[4/3] w-full rounded-md object-cover"
+                    loading="lazy"
+                  />
+                  <p className={`mt-1 text-[11px] font-semibold ${titleClass}`}>{item.name}</p>
+                  <p className={`text-[11px] font-bold ${accentClass}`}>{item.price}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <article className={`overflow-hidden rounded-xl border p-1.5 ${cardClass}`}>
+                  <Image
+                    src="/images/dishes/bruschetta.jpg"
+                    alt="Bruschetta"
+                    width={320}
+                    height={240}
+                    className="aspect-[4/3] w-full rounded-md object-cover"
+                    loading="lazy"
+                  />
+                  <p className={`mt-1 text-xs font-semibold leading-tight ${titleClass}`}>
+                    Bruschetta al pomodoro
+                  </p>
+                  <p className={`text-xs font-bold ${accentClass}`}>€7.20</p>
+                </article>
+                <article className={`overflow-hidden rounded-xl border p-1.5 ${cardClass}`}>
+                  <Image
+                    src="/images/dishes/caprese.jpg"
+                    alt="Caprese"
+                    width={320}
+                    height={240}
+                    className="aspect-[4/3] w-full rounded-md object-cover"
+                    loading="lazy"
+                  />
+                  <p className={`mt-1 text-xs font-semibold leading-tight ${titleClass}`}>Caprese salad</p>
+                  <p className={`text-xs font-bold ${accentClass}`}>€9.80</p>
+                </article>
+              </div>
+
+              <article className={`mt-2 rounded-xl border p-2 ${featuredCardClass}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className={`text-sm font-semibold ${titleClass}`}>Tagliatelle al ragù</p>
+                    <p className={`text-[11px] ${bodyClass}`}>{phoneT("dishDescription")}</p>
+                  </div>
+                  <span className={`text-[10px] uppercase ${metaClass}`}>{phoneT("bestSeller")}</span>
+                </div>
+                <p className={`mt-1 text-sm font-bold ${accentClass}`}>€14.50</p>
+              </article>
+            </>
+          )}
         </div>
       </div>
-      <div className="border-t border-border bg-card px-4 py-3 text-sm font-semibold">
+      <div className="px-1 py-2 text-center text-sm font-semibold">
         {name}
       </div>
-    </div>
+    </Link>
   );
 }

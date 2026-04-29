@@ -1,8 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { AuthLink } from "@/components/auth/auth-link";
 import { ArrowRight, Sparkles, ScanLine, Globe2, ChefHat } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -51,9 +54,9 @@ export function Hero() {
             className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Button asChild size="lg" className="rounded-full px-7">
-              <Link href="/register">
+              <AuthLink to="/register" data-testid="hero-start-free">
                 {t("ctaPrimary")} <ArrowRight className="h-4 w-4" />
-              </Link>
+              </AuthLink>
             </Button>
             <Button asChild variant="outline" size="lg" className="rounded-full px-7">
               <Link href="/pricing">{t("ctaSecondary")}</Link>
@@ -79,72 +82,98 @@ export function Hero() {
 }
 
 function HeroPreview() {
+  const t = useTranslations("Hero.preview");
+  const locale = useLocale();
+
   return (
     <div className="relative mx-auto max-w-5xl">
-      <div className="rounded-3xl border border-border/70 bg-card/60 p-3 shadow-2xl backdrop-blur">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <PreviewPhone className="lg:col-span-1" lang="EN" />
-          <PreviewMenu className="lg:col-span-2" />
+      <div className="grid items-start justify-center gap-6 sm:grid-cols-2">
+        <div className="mx-auto w-full max-w-[330px]">
+          <PreviewAdminPhone />
+        </div>
+        <div className="mx-auto w-full max-w-[330px]">
+          <PreviewPhone lang={locale.toUpperCase()} />
         </div>
       </div>
       <FloatingBadge
-        className="absolute -top-4 -left-4"
+        className="absolute -top-4 left-2 sm:left-0"
         icon={<Globe2 className="h-3.5 w-3.5" />}
-        text="25+ languages"
+        text={t("badgeLanguages")}
       />
       <FloatingBadge
-        className="absolute -bottom-4 -right-4"
+        className="absolute -bottom-4 right-2 sm:right-0"
         icon={<ScanLine className="h-3.5 w-3.5" />}
-        text="Unlimited scans"
+        text={t("badgeScans")}
       />
       <FloatingBadge
-        className="absolute top-1/2 -right-6 hidden lg:flex"
+        className="absolute top-1/2 -right-4 hidden xl:flex"
         icon={<ChefHat className="h-3.5 w-3.5" />}
-        text="AI-translated"
+        text={t("badgeAi")}
       />
     </div>
   );
 }
 
 function PreviewPhone({ className, lang }: { className?: string; lang: string }) {
+  const t = useTranslations("Hero.preview");
+
   return (
     <div
-      className={`relative aspect-[9/14] overflow-hidden rounded-2xl bg-gradient-to-b from-amber-50 to-orange-100 dark:from-zinc-900 dark:to-zinc-950 ${className}`}
+      className={`relative overflow-hidden rounded-[2.3rem] border border-zinc-700 bg-zinc-950 p-2 shadow-[0_25px_80px_hsl(0_0%_0%/0.55)] ${className}`}
     >
-      <div className="p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              QR Menu
-            </p>
-            <p className="text-lg font-display font-bold">La Trattoria</p>
-          </div>
-          <div className="rounded-full bg-background px-2 py-1 text-[10px] font-semibold">
-            {lang}
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-2">
-          {["Antipasti", "Pasta", "Pizza", "Dolci"].map((c) => (
-            <div
-              key={c}
-              className="rounded-lg border border-border/70 bg-background/70 px-3 py-2 text-sm font-medium"
-            >
-              {c}
+      <div className="mx-auto h-1.5 w-20 rounded-full bg-zinc-700/80" />
+      <div className="mt-2 aspect-[9/18] overflow-hidden rounded-[1.8rem] bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500">
+                {t("phone.menuLabel")}
+              </p>
+              <p className="text-lg font-display font-bold text-zinc-100">La Trattoria</p>
             </div>
-          ))}
-        </div>
-
-        <div className="mt-5 rounded-lg bg-background p-3 shadow-sm">
-          <div className="text-sm font-semibold">Tagliatelle al ragù</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            Hand-rolled ribbons in slow beef sauce
+            <div className="rounded-full bg-zinc-800 px-2 py-1 text-[10px] font-semibold text-zinc-100">
+              {lang}
+            </div>
           </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-sm font-bold text-primary">€14.50</span>
-            <span className="text-[10px] uppercase text-muted-foreground">
-              Best seller
-            </span>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {["category1", "category2", "category3", "category4"].map((categoryKey) => (
+              <div
+                key={categoryKey}
+                className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-2 py-1.5 text-center text-xs font-medium text-zinc-200"
+              >
+                {t(`phone.${categoryKey}`)}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {[
+              { name: "Bruschetta al pomodoro", price: "€7.20", image: "/images/dishes/bruschetta.jpg" },
+              { name: "Caprese salad", price: "€9.80", image: "/images/dishes/caprese.jpg" },
+            ].map((dish) => (
+              <div key={dish.name} className="rounded-xl border border-zinc-700 bg-zinc-900/70 p-1.5">
+                <Image
+                  src={dish.image}
+                  alt={dish.name}
+                  width={320}
+                  height={240}
+                  className="aspect-[4/3] w-full rounded-md object-cover"
+                  loading="lazy"
+                />
+                <p className="mt-1 text-[11px] font-semibold text-zinc-100">{dish.name}</p>
+                <p className="text-[11px] font-bold text-primary">{dish.price}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-3">
+            <div className="text-sm font-semibold text-zinc-100">Tagliatelle al ragù</div>
+            <div className="mt-0.5 text-xs text-zinc-400">{t("phone.dishDescription")}</div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-sm font-bold text-primary">€14.50</span>
+              <span className="text-[10px] uppercase text-zinc-500">{t("phone.bestSeller")}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -152,32 +181,80 @@ function PreviewPhone({ className, lang }: { className?: string; lang: string })
   );
 }
 
-function PreviewMenu({ className }: { className?: string }) {
+function PreviewAdminPhone() {
+  const t = useTranslations("Hero.preview.admin");
+
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-50 via-white to-amber-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 ${className}`}
-    >
-      <div className="grid h-full grid-cols-2 gap-3 p-5">
-        {[
-          { name: "Bruschetta al pomodoro", price: "€7.20" },
-          { name: "Caprese salad", price: "€9.80" },
-          { name: "Risotto ai funghi", price: "€16.50" },
-          { name: "Tiramisù", price: "€6.50" },
-        ].map((d) => (
-          <div
-            key={d.name}
-            className="rounded-xl border border-border/60 bg-background/80 p-3"
-          >
-            <div className="aspect-video rounded-md bg-gradient-to-br from-amber-200 via-orange-200 to-rose-200" />
-            <div className="mt-2.5 text-sm font-semibold">{d.name}</div>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="text-sm font-bold text-primary">{d.price}</span>
-              <span className="text-[10px] rounded-full bg-secondary px-1.5 py-0.5 text-secondary-foreground">
-                Vegan
-              </span>
+    <div className="relative overflow-hidden rounded-[2.3rem] border border-zinc-700 bg-zinc-950 p-2 shadow-[0_25px_80px_hsl(0_0%_0%/0.55)]">
+      <div className="mx-auto h-1.5 w-20 rounded-full bg-zinc-700/80" />
+      <div className="mt-2 aspect-[9/18] overflow-hidden rounded-[1.8rem] bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500">{t("label")}</p>
+              <p className="text-lg font-display font-bold text-zinc-100">{t("title")}</p>
+            </div>
+            <div className="rounded-full bg-primary/20 px-2 py-1 text-[10px] font-semibold text-primary">
+              {t("live")}
             </div>
           </div>
-        ))}
+
+          <div className="mt-4 space-y-2">
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2">
+              <p className="text-[10px] uppercase text-zinc-500">{t("fields.nameLabel")}</p>
+              <p className="text-sm font-medium text-zinc-100">{t("fields.nameValue")}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2">
+              <p className="text-[10px] uppercase text-zinc-500">{t("fields.descriptionLabel")}</p>
+              <p className="text-sm text-zinc-200">{t("fields.descriptionValue")}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2">
+                <p className="text-[10px] uppercase text-zinc-500">{t("fields.priceLabel")}</p>
+                <p className="text-sm font-semibold text-primary">€16.90</p>
+              </div>
+              <div className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2">
+                <p className="text-[10px] uppercase text-zinc-500">{t("fields.currencyLabel")}</p>
+                <p className="text-sm font-semibold text-zinc-100">EUR</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-dashed border-primary/50 bg-primary/10 p-3">
+            <p className="text-xs font-medium text-primary">{t("uploadCta")}</p>
+            <p className="mt-1 text-[11px] text-zinc-400">{t("uploadHelp")}</p>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-200"
+            >
+              {t("actions.saveDraft")}
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-primary/70 bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
+            >
+              {t("actions.publish")}
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-zinc-700 bg-zinc-900/70 p-2">
+            <p className="text-[10px] uppercase text-zinc-500">{t("recentLabel")}</p>
+            <div className="mt-2 space-y-1.5">
+              {[t("recentItems.0"), t("recentItems.1"), t("recentItems.2")].map((name) => (
+                <div
+                  key={name}
+                  className="flex items-center justify-between rounded-md bg-zinc-900 px-2 py-1.5"
+                >
+                  <span className="text-xs text-zinc-200">{name}</span>
+                  <span className="text-[10px] text-zinc-500">ok</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
