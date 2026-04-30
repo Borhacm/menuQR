@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getStripeClient } from "@/lib/stripe/client";
 import { logEvent, metricIncr } from "@/lib/observability";
 import { authUrl } from "@/lib/auth/redirects";
-import { appUrl } from "@/lib/routes";
+import { appUrl, billingStatus } from "@/lib/routes";
 import { resolveTenantMembership } from "@/lib/auth/tenant";
 
 export async function POST(req: Request) {
@@ -15,7 +15,9 @@ export async function POST(req: Request) {
   const customerId = membership?.organization.stripeCustomerId;
   if (!customerId || !process.env.STRIPE_SECRET_KEY) {
     metricIncr("stripe_portal_missing_config_total");
-    return NextResponse.redirect(appUrl(req.url, "billing"));
+    return NextResponse.redirect(
+      appUrl(req.url, "billing", { status: billingStatus.missingConfig })
+    );
   }
   const stripe = getStripeClient();
 

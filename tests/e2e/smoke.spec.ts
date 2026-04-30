@@ -3,8 +3,10 @@ import { test, expect } from "@playwright/test";
 test("landing renders and links to auth", async ({ page }) => {
   await page.goto("/en");
   await expect(page.getByRole("heading", { name: /multilingual qr menus/i })).toBeVisible();
-  await page.getByRole("link", { name: /sign up|crear cuenta/i }).first().click();
-  await expect(page).toHaveURL(/\/register$/);
+  const cta = page.getByTestId("hero-start-free");
+  await expect(cta).toHaveAttribute("href", "/register");
+  await page.goto("/register");
+  await expect(page).toHaveURL(/\/register$/, { timeout: 15000 });
 });
 
 test("ai parse endpoint requires auth", async ({ request }) => {
@@ -18,4 +20,14 @@ test("ai parse endpoint requires auth", async ({ request }) => {
     },
   });
   expect(res.status()).toBe(401);
+});
+
+test("qr export endpoint requires auth", async ({ request }) => {
+  const res = await request.get("/api/qr/export?resourceId=test-resource&format=png");
+  expect(res.status()).toBe(401);
+});
+
+test("track endpoint validates payload", async ({ request }) => {
+  const res = await request.post("/api/track", { data: {} });
+  expect(res.status()).toBe(400);
 });

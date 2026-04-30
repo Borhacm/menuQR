@@ -39,6 +39,7 @@ export default function middleware(req: NextRequest) {
     url.pathname.startsWith("/login") ||
     url.pathname.startsWith("/register") ||
     url.pathname.startsWith("/verify") ||
+    url.pathname.startsWith("/invite") ||
     url.pathname.startsWith("/onboarding") ||
     url.pathname.startsWith("/m/") ||
     url.pathname.startsWith("/_menu/") ||

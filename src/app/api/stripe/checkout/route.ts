@@ -29,7 +29,9 @@ export async function POST(req: Request) {
 
   if (!priceId || !process.env.STRIPE_SECRET_KEY) {
     metricIncr("stripe_checkout_missing_config_total");
-    return NextResponse.redirect(appUrl(req.url, "billing"));
+    return NextResponse.redirect(
+      appUrl(req.url, "billing", { status: billingStatus.missingConfig })
+    );
   }
   const stripe = getStripeClient();
 
