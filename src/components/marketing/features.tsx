@@ -62,7 +62,7 @@ export function Features() {
                 {t(`items.${key}.description`)}
               </p>
               <span className="mt-4 inline-flex text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                Learn more →
+                {t("learnMore")} →
               </span>
             </Link>
           </motion.div>

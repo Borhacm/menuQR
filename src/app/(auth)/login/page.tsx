@@ -1,12 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { loginAction } from "@/lib/auth/actions";
 import { Logo } from "@/components/marketing/logo";
-import { Link } from "@/i18n/navigation";
+import { AuthLink } from "@/components/auth/auth-link";
+import { LoginForm } from "@/components/auth/login-form";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{ next?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const googleEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+  const params = (await searchParams) ?? {};
+  const nextPath = typeof params.next === "string" ? params.next : undefined;
+
   return (
     <main className="container mx-auto flex min-h-[80vh] max-w-4xl items-center px-4 py-16">
       <Card className="mx-auto w-full max-w-md">
@@ -17,24 +22,12 @@ export default function LoginPage() {
           <CardTitle>Sign in to your account</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={loginAction} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
-            </div>
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
-          </form>
+          <LoginForm googleEnabled={googleEnabled} nextPath={nextPath} />
           <p className="mt-4 text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline">
+            <AuthLink to="/register" className="text-primary hover:underline">
               Create one
-            </Link>
+            </AuthLink>
           </p>
         </CardContent>
       </Card>

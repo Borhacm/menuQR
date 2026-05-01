@@ -8,6 +8,8 @@ import { LocaleSwitcher } from "./locale-switcher";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { AuthLink } from "@/components/auth/auth-link";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function MarketingHeader() {
   const t = useTranslations("Nav");
@@ -42,18 +44,19 @@ export function MarketingHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
+          <ThemeToggle />
           <LocaleSwitcher />
           <Button asChild variant="ghost" size="sm">
-            <Link href="/login">{t("signIn")}</Link>
+            <AuthLink to="/login">{t("signIn")}</AuthLink>
           </Button>
           <Button asChild size="sm">
-            <Link href="/register">{t("signUp")}</Link>
+            <AuthLink to="/register">{t("signUp")}</AuthLink>
           </Button>
         </div>
 
         <button
           type="button"
-          aria-label="Toggle menu"
+          aria-label={t("toggleMenu")}
           className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent/10"
           onClick={() => setOpen(!open)}
         >
@@ -79,12 +82,13 @@ export function MarketingHeader() {
             </Link>
           ))}
           <div className="mt-2 flex items-center gap-2">
+            <ThemeToggle />
             <LocaleSwitcher />
             <Button asChild variant="outline" size="sm" className="flex-1">
-              <Link href="/login">{t("signIn")}</Link>
+              <AuthLink to="/login">{t("signIn")}</AuthLink>
             </Button>
             <Button asChild size="sm" className="flex-1">
-              <Link href="/register">{t("signUp")}</Link>
+              <AuthLink to="/register">{t("signUp")}</AuthLink>
             </Button>
           </div>
         </div>

@@ -11,9 +11,6 @@ import { ClassicTemplate } from "@/components/menu-templates/classic";
 import { ModernTemplate } from "@/components/menu-templates/modern";
 import { GridTemplate } from "@/components/menu-templates/grid";
 
-const DEBUG_ENDPOINT = "http://127.0.0.1:7452/ingest/54514924-7609-4d2f-b3d9-5cf5fdd32099";
-const DEBUG_SESSION_ID = "ffc295";
-
 type TemplatesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -23,8 +20,6 @@ export default async function TemplatesPage({ searchParams }: TemplatesPageProps
   const locale = await getAdminLocale();
   const labels = getAdminMessages(locale).templates;
   const params = (await searchParams) ?? {};
-  const debugRunRaw = Array.isArray(params.debugRun) ? params.debugRun[0] : params.debugRun;
-  const debugRunId = typeof debugRunRaw === "string" && debugRunRaw.trim().length > 0 ? debugRunRaw : "initial";
   const saved = params.saved === "styles";
   const rawTab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
   const initialTab = rawTab === "mobile-preview" ? "mobile-preview" : "style-editor";
@@ -126,32 +121,6 @@ export default async function TemplatesPage({ searchParams }: TemplatesPageProps
               })),
           }))
       ) ?? [];
-
-  const firstPriceAmount = categories[0]?.items?.[0]?.prices?.[0]?.amount;
-  // #region agent log
-  fetch(DEBUG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": DEBUG_SESSION_ID },
-    body: JSON.stringify({
-      sessionId: DEBUG_SESSION_ID,
-      runId: debugRunId,
-      hypothesisId: "H1_H2",
-      location: "src/app/(app)/app/templates/page.tsx:122",
-      message: "Templates payload built",
-      data: {
-        categoriesCount: categories.length,
-        itemsCount: categories.reduce((acc, category) => acc + category.items.length, 0),
-        hasFirstPrice: firstPriceAmount !== undefined,
-        firstPriceType: typeof firstPriceAmount,
-        firstPriceCtor:
-          firstPriceAmount && typeof firstPriceAmount === "object"
-            ? ((firstPriceAmount as { constructor?: { name?: string } }).constructor?.name ?? "unknown")
-            : null,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   const enabledLocales = resourceData
     ? resourceData.enabledLocales.length
       ? resourceData.enabledLocales
@@ -196,34 +165,6 @@ export default async function TemplatesPage({ searchParams }: TemplatesPageProps
       description: translationMap.get(`ITEM:${item.id}:description`) ?? item.description,
     })),
   }));
-  const hasNonSerializablePrice = localizedCategories.some((category) =>
-    category.items.some((item) =>
-      item.prices.some((price) => typeof price.amount === "object" && price.amount !== null)
-    )
-  );
-  // #region agent log
-  fetch(DEBUG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": DEBUG_SESSION_ID },
-    body: JSON.stringify({
-      sessionId: DEBUG_SESSION_ID,
-      runId: debugRunId,
-      hypothesisId: "H1_H3_H4",
-      location: "src/app/(app)/app/templates/page.tsx:180",
-      message: "Templates serialization precheck",
-      data: {
-        hasNonSerializablePrice,
-        sampleAmountCtor:
-          localizedCategories[0]?.items?.[0]?.prices?.[0]?.amount &&
-          typeof localizedCategories[0].items[0].prices[0].amount === "object"
-            ? ((localizedCategories[0].items[0].prices[0].amount as { constructor?: { name?: string } })
-                .constructor?.name ?? "unknown")
-            : null,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   const previewTheme = {
     primary: primaryColor,
     background: backgroundColor,

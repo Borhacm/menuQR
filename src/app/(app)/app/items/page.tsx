@@ -1,74 +1,785 @@
 import { db } from "@/lib/db";
+import { createHash } from "node:crypto";
 import { requireTenantContext } from "@/lib/auth/guards";
-import { createItemAction } from "@/lib/admin/actions";
+import {
+  createMenuAction,
+  createItemAction,
+  deleteMenuAction,
+  deleteItemAction,
+  markTranslationDraftAction,
+  moveMenuAction,
+  saveTranslationOverrideAction,
+  updateMenuAction,
+  updateItemAction,
+} from "@/lib/admin/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { appHref, appRoutes } from "@/lib/routes";
+import { canUseMultiCurrency, getPlan, hasAllergenFeature } from "@/config/plans";
+import Image from "next/image";
+import Link from "next/link";
+import { shouldOptimizeImageSrc } from "@/lib/images";
+import { ItemFormAssistant } from "@/components/admin/item-form-assistant";
+import { getAdminLocale, getAdminMessages } from "@/lib/admin/i18n";
+import { isVisibleAllergen, localizeAllergenName } from "@/lib/allergens";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ActionSubmitButton } from "@/components/admin/action-submit-button";
+import { ItemsFeedbackToasts } from "@/components/admin/items-feedback-toasts";
 
-export default async function ItemsPage() {
+export default async function ItemsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const isLegacyMainCategory = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "main" || normalized === "principal";
+  };
+  const getSourceHash = (value: string) => createHash("sha256").update(value.trim()).digest("hex");
+
+  const params = searchParams ? await searchParams : undefined;
+  const rawTab = Array.isArray(params?.tab) ? params?.tab[0] : params?.tab;
+  const initialTab = rawTab === "products" || rawTab === "translations" ? rawTab : "categories";
+  const rawStatus = Array.isArray(params?.status) ? params.status[0] : params?.status;
+  const status = typeof rawStatus === "string" ? rawStatus : undefined;
+  const rawDeleted = Array.isArray(params?.deleted) ? params.deleted[0] : params?.deleted;
+  const deleted = typeof rawDeleted === "string" ? rawDeleted : undefined;
+  const rawUpdated = Array.isArray(params?.updated) ? params.updated[0] : params?.updated;
+  const updated = typeof rawUpdated === "string" ? rawUpdated : undefined;
+  const rawUpdateError = Array.isArray(params?.updateError) ? params.updateError[0] : params?.updateError;
+  const updateError = typeof rawUpdateError === "string" ? rawUpdateError : undefined;
+  const rawEditItemId = Array.isArray(params?.editItemId) ? params.editItemId[0] : params?.editItemId;
+  const editItemId = typeof rawEditItemId === "string" ? rawEditItemId : "";
   const ctx = await requireTenantContext();
+  const locale = await getAdminLocale();
+  const m = getAdminMessages(locale);
+  const t = m.items;
+  const menusT = m.menus;
+  const translationsT = m.translations;
+  const canUseAllergens = hasAllergenFeature(ctx.organization.planId);
+  const canUseMultipleCurrencies = canUseMultiCurrency(ctx.organization.planId);
+  const allergens = await db.allergen.findMany({ orderBy: { name: "asc" } });
   const items = ctx.resource
     ? await db.item.findMany({
         where: { category: { menu: { resourceId: ctx.resource.id } } },
-        include: { prices: true, category: true },
+        include: {
+          prices: true,
+          category: true,
+          images: { orderBy: { position: "asc" }, take: 1 },
+          allergens: { include: { allergen: true } },
+        },
         orderBy: { createdAt: "desc" },
       })
     : [];
+  const categories = ctx.resource
+    ? await db.category.findMany({
+        where: { menu: { resourceId: ctx.resource.id } },
+        orderBy: [{ menu: { position: "asc" } }, { position: "asc" }],
+        include: { menu: true },
+      })
+    : [];
+  const menus = ctx.resource
+    ? await db.menu.findMany({
+        where: { resourceId: ctx.resource.id },
+        orderBy: { position: "asc" },
+        include: { categories: true },
+      })
+    : [];
+  const hasMultipleGroups = new Set(categories.map((category) => category.menuId)).size > 1;
+  const availableCurrencies = Array.from(
+    new Set(
+      ctx.resource
+        ? [ctx.resource.defaultCurrency, ...ctx.resource.enabledCurrencies].map((currency) =>
+            currency.toUpperCase()
+          )
+        : ["EUR"]
+    )
+  );
+  const categoryLabel = (category: (typeof categories)[number]) =>
+    category.name.toLowerCase() === "main" ? category.menu.name : category.name;
+  const categoryOptionLabel = (category: (typeof categories)[number]) => {
+    const label = categoryLabel(category);
+    if (!hasMultipleGroups) return label;
+    return category.menu.name === label ? label : `${category.menu.name} - ${label}`;
+  };
+  const isDefaultPriceLabel = (label: string | null) => {
+    const normalized = (label ?? "").trim().toLowerCase();
+    return !normalized || normalized === "default" || normalized === "regular";
+  };
+  const statusMap: Record<string, string> = {
+    done:
+      locale === "es"
+        ? "Traducción completada. Revisa y ajusta los textos si hace falta."
+        : "Translation completed. Review and adjust texts if needed.",
+    failed:
+      locale === "es"
+        ? "La traducción falló. Revisa sesión y configuración del proveedor, luego vuelve a intentar."
+        : "Translation failed. Check session and provider configuration, then try again.",
+    no_resource:
+      locale === "es"
+        ? "No encontramos un recurso activo para traducir en este workspace."
+        : "No active resource was found to translate in this workspace.",
+    db_unavailable:
+      locale === "es"
+        ? "La base de datos no está disponible en este momento. Inicia Docker y vuelve a intentar."
+        : "Database is currently unavailable. Start Docker and try again.",
+    accepted:
+      locale === "es"
+        ? "Traducción aceptada. Este campo no se volverá a traducir automáticamente."
+        : "Translation accepted. This field will not be auto-translated again.",
+    editing:
+      locale === "es"
+        ? "Edición habilitada. Este campo puede sobrescribirse al traducir de nuevo hasta que vuelvas a aceptarlo."
+        : "Editing enabled. This field can be overwritten by auto-translation until accepted again.",
+  };
+  const resourceForTranslations = ctx.resource
+    ? await db.resource.findUnique({
+        where: { id: ctx.resource.id },
+        include: {
+          menus: {
+            orderBy: { position: "asc" },
+            include: {
+              categories: {
+                where: { isActive: true },
+                orderBy: { position: "asc" },
+                include: {
+                  items: {
+                    where: { isActive: true },
+                    orderBy: { position: "asc" },
+                    include: {
+                      prices: { orderBy: { position: "asc" } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+    : null;
+  const translationPlan = getPlan(ctx.organization.planId);
+  const targetLocales = resourceForTranslations
+    ? resourceForTranslations.enabledLocales
+        .filter((enabledLocale) => enabledLocale !== resourceForTranslations.defaultLocale)
+        .slice(0, translationPlan.limits.maxLanguages)
+    : [];
+  const translationEntries =
+    resourceForTranslations && targetLocales.length
+      ? await db.translation.findMany({
+          where: {
+            locale: { in: targetLocales },
+            OR: [
+              { entityType: "RESOURCE", entityId: resourceForTranslations.id },
+              ...resourceForTranslations.menus.map((menu) => ({ entityType: "MENU" as const, entityId: menu.id })),
+              ...resourceForTranslations.menus.flatMap((menu) =>
+                menu.categories.map((category) => ({ entityType: "CATEGORY" as const, entityId: category.id }))
+              ),
+              ...resourceForTranslations.menus.flatMap((menu) =>
+                menu.categories.flatMap((category) =>
+                  category.items.map((item) => ({ entityType: "ITEM" as const, entityId: item.id }))
+                )
+              ),
+              ...resourceForTranslations.menus.flatMap((menu) =>
+                menu.categories.flatMap((category) =>
+                  category.items.flatMap((item) =>
+                    item.prices.map((price) => ({ entityType: "ITEM_PRICE" as const, entityId: price.id }))
+                  )
+                )
+              ),
+            ],
+          },
+        })
+      : [];
+  const translationMap = new Map(
+    translationEntries.map((entry) => [`${entry.locale}:${entry.entityType}:${entry.entityId}:${entry.field}`, entry])
+  );
+  const rawLocale = Array.isArray(params?.locale) ? params.locale[0] : params?.locale;
+  const defaultLocaleTab =
+    typeof rawLocale === "string" && targetLocales.includes(rawLocale) ? rawLocale : (targetLocales[0] ?? "");
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl font-bold">Items</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Create item</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={createItemAction} className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input name="name" placeholder="Margherita" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Input name="description" placeholder="Tomato, mozzarella, basil" />
-            </div>
-            <div className="space-y-2">
-              <Label>Price</Label>
-              <Input name="price" type="number" step="0.01" min="0.01" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <Input name="currency" defaultValue="EUR" />
-            </div>
-            <div className="md:col-span-2">
-              <Button type="submit">Save item</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <ItemsFeedbackToasts
+        locale={locale}
+        updated={Boolean(updated)}
+        deleted={Boolean(deleted && initialTab === "products")}
+        updateError={Boolean(updateError)}
+      />
+      <h1 className="font-display text-2xl font-bold">{t.title}</h1>
+      {status && statusMap[status] && initialTab === "translations" ? (
+        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+          {statusMap[status]}
+        </div>
+      ) : null}
+      {deleted && initialTab === "products" ? (
+        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+          {locale === "es"
+            ? "Producto eliminado correctamente. Puede tardar unos segundos en reflejarse en toda la interfaz."
+            : "Product deleted successfully. It can take a few seconds to reflect across the UI."}
+        </div>
+      ) : null}
+      {deleted && initialTab === "categories" ? (
+        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+          {locale === "es"
+            ? "Categoría o menú eliminado correctamente. Puede tardar unos segundos en reflejarse en toda la interfaz."
+            : "Category or menu deleted successfully. It can take a few seconds to reflect across the UI."}
+        </div>
+      ) : null}
+      <Tabs defaultValue={initialTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="categories">{menusT.title}</TabsTrigger>
+          <TabsTrigger value="products">{t.title}</TabsTrigger>
+          <TabsTrigger value="translations">{translationsT.title}</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Current items</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-md border p-3">
-              <div className="font-medium">{item.name}</div>
-              <div className="text-muted-foreground">{item.description}</div>
-              <div className="mt-1">
-                {item.prices.map((p) => (
-                  <span key={p.id} className="mr-2 text-xs text-primary">
-                    {p.currency} {String(p.amount)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-          {!items.length && <p className="text-muted-foreground">No items yet.</p>}
-        </CardContent>
-      </Card>
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{menusT.createTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action={createMenuAction} className="flex flex-col gap-2 sm:flex-row">
+                <Input name="name" placeholder={menusT.namePlaceholder} />
+                <Button type="submit" className="sm:w-auto">
+                  {menusT.add}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{menusT.existingTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-xs text-muted-foreground">
+                {locale === "es"
+                  ? "El orden de estas categorías se usa en la vista pública del menú. Ajusta con subir/bajar."
+                  : "The order of these categories is used in the public menu view. Adjust it with up/down."}
+              </p>
+              {menus.map((menu) => (
+                <div key={menu.id} className="rounded-md border p-3">
+                  <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center">
+                    <form action={updateMenuAction} className="contents">
+                      <input type="hidden" name="menuId" value={menu.id} />
+                      <Input name="name" defaultValue={menu.name} />
+                      <Button type="submit" size="sm" variant="outline">
+                        {menusT.save}
+                      </Button>
+                    </form>
+                    <div className="flex gap-2">
+                      <form action={moveMenuAction}>
+                        <input type="hidden" name="menuId" value={menu.id} />
+                        <input type="hidden" name="direction" value="up" />
+                        <Button type="submit" size="sm" variant="outline" aria-label={locale === "es" ? "Subir" : "Move up"}>
+                          ↑
+                        </Button>
+                      </form>
+                      <form action={moveMenuAction}>
+                        <input type="hidden" name="menuId" value={menu.id} />
+                        <input type="hidden" name="direction" value="down" />
+                        <Button type="submit" size="sm" variant="outline" aria-label={locale === "es" ? "Bajar" : "Move down"}>
+                          ↓
+                        </Button>
+                      </form>
+                    </div>
+                    <form action={deleteMenuAction}>
+                      <input type="hidden" name="menuId" value={menu.id} />
+                      <ActionSubmitButton
+                        size="sm"
+                        variant="destructive"
+                        idleLabel={menusT.delete}
+                        pendingLabel={locale === "es" ? "Eliminando..." : "Deleting..."}
+                        confirmMessage={menusT.deleteConfirm}
+                      />
+                    </form>
+                  </div>
+                </div>
+              ))}
+              {!menus.length ? <p className="text-muted-foreground">{menusT.empty}</p> : null}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.createTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action={createItemAction} className="grid gap-3 md:grid-cols-2">
+                <ItemFormAssistant
+                  canUseMultipleCurrencies={canUseMultipleCurrencies}
+                  availableCurrencies={availableCurrencies}
+                  categoryOptions={categories.map((category) => ({
+                    id: category.id,
+                    label: categoryOptionLabel(category),
+                  }))}
+                  categoryFieldLabel={t.category}
+                  canUseAllergens={canUseAllergens}
+                  allergenOptions={allergens
+                    .filter((allergen) => isVisibleAllergen(allergen.code))
+                    .map((allergen) => ({
+                      code: allergen.code,
+                      label: `${allergen.icon ? `${allergen.icon} ` : ""}${localizeAllergenName(allergen.code, locale, allergen.name)}`,
+                    }))}
+                  allergensLabel={t.allergens}
+                  allergensPaidOnlyLabel={t.allergensPaidOnly}
+                  upgradeHref={appRoutes.billing}
+                  upgradeLabel={t.upgradeToUnlock}
+                  labels={m.itemForm}
+                  imagePickerLabels={m.itemImagePicker}
+                />
+                <div className="md:col-span-2">
+                  <Button type="submit">{t.save}</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.currentTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {items.map((item) => (
+                <div key={item.id} className="rounded-md border p-3">
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-base font-semibold">{item.name}</p>
+                      {item.description ? (
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      {editItemId === item.id ? (
+                        <>
+                          <ActionSubmitButton
+                            size="sm"
+                            variant="outline"
+                            form={`update-item-${item.id}`}
+                            idleLabel={locale === "es" ? "Guardar" : "Save"}
+                            pendingLabel={locale === "es" ? "Guardando..." : "Saving..."}
+                          />
+                          <Button asChild type="button" size="sm" variant="outline">
+                            <Link href={appHref("items", { tab: "products" })}>
+                              {locale === "es" ? "Cancelar" : "Cancel"}
+                            </Link>
+                          </Button>
+                        </>
+                      ) : (
+                        <Button asChild type="button" size="sm" variant="outline">
+                          <Link href={appHref("items", { tab: "products", editItemId: item.id })}>
+                            {locale === "es" ? "Editar" : "Edit"}
+                          </Link>
+                        </Button>
+                      )}
+                      <form action={deleteItemAction}>
+                        <input type="hidden" name="itemId" value={item.id} />
+                        <ActionSubmitButton
+                          size="sm"
+                          variant="destructive"
+                          idleLabel={t.delete}
+                          pendingLabel={locale === "es" ? "Eliminando..." : "Deleting..."}
+                          confirmMessage={t.deleteConfirm}
+                        />
+                      </form>
+                    </div>
+                  </div>
+                  {editItemId === item.id ? (
+                    <form
+                      id={`update-item-${item.id}`}
+                      action={updateItemAction}
+                      className="grid gap-2 md:grid-cols-3"
+                    >
+                      <input type="hidden" name="itemId" value={item.id} />
+                      <Input name="name" defaultValue={item.name} />
+                      <Input name="description" defaultValue={item.description ?? ""} />
+                      <select
+                        name="categoryId"
+                        aria-label={t.category}
+                        defaultValue={item.categoryId}
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {categoryOptionLabel(category)}
+                          </option>
+                        ))}
+                      </select>
+                      <label className="md:col-span-3 flex items-center gap-2 text-xs text-muted-foreground">
+                        <input type="checkbox" name="isFeatured" defaultChecked={item.isFeatured} />
+                        {t.featured}
+                      </label>
+                      <div className="md:col-span-3 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">{m.itemForm.prices}</p>
+                        <div className="space-y-2">
+                          {item.prices.map((price) => (
+                            <div key={price.id} className="grid gap-2 sm:grid-cols-[120px_160px]">
+                              <select
+                                name="currencyValues"
+                                defaultValue={price.currency}
+                                aria-label={m.itemForm.currencyPlaceholder}
+                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                              >
+                                {availableCurrencies.map((currency) => (
+                                  <option key={currency} value={currency}>
+                                    {currency}
+                                  </option>
+                                ))}
+                              </select>
+                              <Input
+                                name="priceValues"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                required
+                                defaultValue={String(price.amount)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {canUseAllergens ? (
+                        <div className="md:col-span-3 space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">{t.allergens}</p>
+                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {allergens
+                              .filter((allergen) => isVisibleAllergen(allergen.code))
+                              .map((allergen) => (
+                                <label key={`${item.id}-${allergen.code}`} className="flex items-center gap-2 text-sm">
+                                  <input
+                                    type="checkbox"
+                                    name="allergens"
+                                    value={allergen.code}
+                                    defaultChecked={item.allergens.some(
+                                      (entry) => entry.allergen.code === allergen.code
+                                    )}
+                                  />
+                                  <span>
+                                    {allergen.icon ? `${allergen.icon} ` : ""}
+                                    {localizeAllergenName(allergen.code, locale, allergen.name)}
+                                  </span>
+                                </label>
+                              ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </form>
+                  ) : null}
+                  {item.images[0]?.url ? (
+                    <div className="mb-2">
+                      {shouldOptimizeImageSrc(item.images[0].url) ? (
+                        <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">
+                          {t.optimizedImage}
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300">
+                          {t.compatibleImage}
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
+                  {item.images[0]?.url ? (
+                    <Image
+                      src={item.images[0].url}
+                      alt={item.images[0].alt ?? item.name}
+                      width={640}
+                      height={256}
+                      unoptimized={!shouldOptimizeImageSrc(item.images[0].url)}
+                      className="mb-2 h-32 w-full rounded-md object-cover"
+                      loading="lazy"
+                    />
+                  ) : null}
+                  {!item.images[0]?.url ? (
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      {t.noPhoto}
+                    </p>
+                  ) : null}
+                  <div className="text-xs text-muted-foreground">
+                    {t.category}: {item.category.name}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-1.5 text-xs">
+                    {item.isFeatured ? <span className="rounded-full border px-2 py-0.5">{t.featured}</span> : null}
+                    {item.isVegan ? <span className="rounded-full border px-2 py-0.5">{t.vegan}</span> : null}
+                    {item.isVegetarian ? <span className="rounded-full border px-2 py-0.5">{t.vegetarian}</span> : null}
+                    {item.isGlutenFree ? <span className="rounded-full border px-2 py-0.5">{t.glutenFree}</span> : null}
+                    {item.isSpicy ? <span className="rounded-full border px-2 py-0.5">{t.spicy}</span> : null}
+                  </div>
+                  {canUseAllergens && item.allergens.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+                      {item.allergens
+                        .filter((entry) => isVisibleAllergen(entry.allergen.code))
+                        .map((entry) => (
+                        <span key={entry.allergenId} className="rounded-full border px-2 py-0.5">
+                          {entry.allergen.icon ? `${entry.allergen.icon} ` : ""}
+                          {localizeAllergenName(entry.allergen.code, locale, entry.allergen.name)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="mt-1">
+                    {item.prices.map((p) => (
+                      <span key={p.id} className="mr-2 text-xs text-primary">
+                        {p.currency} {String(p.amount)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {!items.length && <p className="text-muted-foreground">{t.empty}</p>}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="translations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{translationsT.aiQueueTitle}</CardTitle>
+              <p className="text-sm text-muted-foreground">{translationsT.aiQueueDescription}</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <form action="/api/ai/translate" method="post">
+                <Button type="submit">{translationsT.translateNow}</Button>
+              </form>
+              {!resourceForTranslations ? (
+                <p className="text-sm text-muted-foreground">{translationsT.empty}</p>
+              ) : !targetLocales.length ? (
+                <p className="text-sm text-muted-foreground">
+                  {locale === "es"
+                    ? "No hay idiomas de destino configurados. Activa al menos un idioma distinto al principal en Ajustes."
+                    : "No target languages configured. Enable at least one language different from the default in Settings."}
+                </p>
+              ) : (
+                <Tabs defaultValue={defaultLocaleTab} className="space-y-4">
+                  <TabsList>
+                    {targetLocales.map((targetLocale) => (
+                      <TabsTrigger key={targetLocale} value={targetLocale}>
+                        {targetLocale.toUpperCase()}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {targetLocales.map((targetLocale) => {
+                    const resourceEntry = translationMap.get(
+                      `${targetLocale}:RESOURCE:${resourceForTranslations.id}:name`
+                    );
+                    const resourceName = resourceEntry?.value ??
+                      resourceForTranslations.name;
+                    const resourceApproved = resourceEntry?.status === "APPROVED";
+                    return (
+                      <TabsContent key={targetLocale} value={targetLocale} className="space-y-3">
+                        <div className="rounded-md border p-3">
+                          <p className="mb-2 text-xs text-muted-foreground">{translationsT.fieldName}</p>
+                          <form action={saveTranslationOverrideAction} className="flex gap-2">
+                            <input type="hidden" name="entityType" value="RESOURCE" />
+                            <input type="hidden" name="entityId" value={resourceForTranslations.id} />
+                            <input type="hidden" name="locale" value={targetLocale} />
+                            <input type="hidden" name="field" value="name" />
+                            <input type="hidden" name="sourceHash" value={getSourceHash(resourceForTranslations.name)} />
+                            <Input
+                              name="value"
+                              defaultValue={resourceName}
+                              placeholder={translationsT.overridePlaceholder}
+                              readOnly={resourceApproved}
+                            />
+                            <input type="hidden" name="approve" value="1" />
+                            <Button type="submit" size="sm" variant="outline" disabled={resourceApproved}>
+                              {locale === "es" ? "Aceptar" : "Accept"}
+                            </Button>
+                          </form>
+                          {resourceApproved ? (
+                            <form action={markTranslationDraftAction} className="mt-2">
+                              <input type="hidden" name="entityType" value="RESOURCE" />
+                              <input type="hidden" name="entityId" value={resourceForTranslations.id} />
+                              <input type="hidden" name="locale" value={targetLocale} />
+                              <input type="hidden" name="field" value="name" />
+                              <Button type="submit" size="sm" variant="outline">
+                                {locale === "es" ? "Editar" : "Edit"}
+                              </Button>
+                            </form>
+                          ) : null}
+                        </div>
+                        {resourceForTranslations.menus.flatMap((menu) =>
+                          menu.categories
+                            .filter((category) => {
+                              const isMainCategory = isLegacyMainCategory(category.name);
+                              // Hide Main buckets from translation editing UI entirely.
+                              return !isMainCategory;
+                            })
+                            .map((category, categoryIndex) => {
+                            const isMainCategory = isLegacyMainCategory(category.name);
+                            const categoryEntry = translationMap.get(`${targetLocale}:CATEGORY:${category.id}:name`);
+                            const rawCategoryValue = categoryEntry?.value ?? category.name;
+                            const categoryValue = isLegacyMainCategory(rawCategoryValue)
+                              ? category.name
+                              : rawCategoryValue;
+                            const categoryApproved = categoryEntry?.status === "APPROVED";
+                            return (
+                              <div key={category.id} className="space-y-2 rounded-md border p-3">
+                                {!isMainCategory ? (
+                                  <>
+                                    <div className="text-xs font-medium text-muted-foreground">
+                                      {locale === "es" ? "Categoría" : "Category"}
+                                    </div>
+                                    <form action={saveTranslationOverrideAction} className="flex gap-2">
+                                      <input type="hidden" name="entityType" value="CATEGORY" />
+                                      <input type="hidden" name="entityId" value={category.id} />
+                                      <input type="hidden" name="locale" value={targetLocale} />
+                                      <input type="hidden" name="field" value="name" />
+                                      <input type="hidden" name="sourceHash" value={getSourceHash(category.name)} />
+                                      <Input
+                                        name="value"
+                                        defaultValue={categoryValue}
+                                        placeholder={translationsT.overridePlaceholder}
+                                        readOnly={categoryApproved}
+                                      />
+                                      <input type="hidden" name="approve" value="1" />
+                                      <Button type="submit" size="sm" variant="outline" disabled={categoryApproved}>
+                                        {locale === "es" ? "Aceptar" : "Accept"}
+                                      </Button>
+                                    </form>
+                                    {categoryApproved ? (
+                                      <form action={markTranslationDraftAction}>
+                                        <input type="hidden" name="entityType" value="CATEGORY" />
+                                        <input type="hidden" name="entityId" value={category.id} />
+                                        <input type="hidden" name="locale" value={targetLocale} />
+                                        <input type="hidden" name="field" value="name" />
+                                        <Button type="submit" size="sm" variant="outline">
+                                          {locale === "es" ? "Editar" : "Edit"}
+                                        </Button>
+                                      </form>
+                                    ) : null}
+                                  </>
+                                ) : null}
+                                {category.items.map((item) => (
+                                  <div key={item.id} className="space-y-2 rounded-md border p-3">
+                                    <div className="text-xs font-medium text-muted-foreground">
+                                      {locale === "es" ? "Producto" : "Item"}
+                                    </div>
+                                    {(() => {
+                                      const itemNameEntry = translationMap.get(`${targetLocale}:ITEM:${item.id}:name`);
+                                      const itemNameValue = itemNameEntry?.value ?? item.name;
+                                      const itemNameApproved = itemNameEntry?.status === "APPROVED";
+                                      const itemDescEntry = translationMap.get(`${targetLocale}:ITEM:${item.id}:description`);
+                                      const itemDescValue = itemDescEntry?.value ?? (item.description ?? "");
+                                      const itemDescApproved = itemDescEntry?.status === "APPROVED";
+                                      return (
+                                        <>
+                                          <form action={saveTranslationOverrideAction} className="flex gap-2">
+                                            <input type="hidden" name="entityType" value="ITEM" />
+                                            <input type="hidden" name="entityId" value={item.id} />
+                                            <input type="hidden" name="locale" value={targetLocale} />
+                                            <input type="hidden" name="field" value="name" />
+                                            <input type="hidden" name="sourceHash" value={getSourceHash(item.name)} />
+                                            <Input
+                                              name="value"
+                                              defaultValue={itemNameValue}
+                                              placeholder={translationsT.overridePlaceholder}
+                                              readOnly={itemNameApproved}
+                                            />
+                                            <input type="hidden" name="approve" value="1" />
+                                            <Button type="submit" size="sm" variant="outline" disabled={itemNameApproved}>
+                                              {locale === "es" ? "Aceptar" : "Accept"}
+                                            </Button>
+                                          </form>
+                                          {itemNameApproved ? (
+                                            <form action={markTranslationDraftAction}>
+                                              <input type="hidden" name="entityType" value="ITEM" />
+                                              <input type="hidden" name="entityId" value={item.id} />
+                                              <input type="hidden" name="locale" value={targetLocale} />
+                                              <input type="hidden" name="field" value="name" />
+                                              <Button type="submit" size="sm" variant="outline">
+                                                {locale === "es" ? "Editar" : "Edit"}
+                                              </Button>
+                                            </form>
+                                          ) : null}
+                                          <form action={saveTranslationOverrideAction} className="flex gap-2">
+                                            <input type="hidden" name="entityType" value="ITEM" />
+                                            <input type="hidden" name="entityId" value={item.id} />
+                                            <input type="hidden" name="locale" value={targetLocale} />
+                                            <input type="hidden" name="field" value="description" />
+                                            <input type="hidden" name="sourceHash" value={getSourceHash(item.description ?? "")} />
+                                            <Input
+                                              name="value"
+                                              defaultValue={itemDescValue}
+                                              placeholder={translationsT.fieldDescription}
+                                              readOnly={itemDescApproved}
+                                            />
+                                            <input type="hidden" name="approve" value="1" />
+                                            <Button type="submit" size="sm" variant="outline" disabled={itemDescApproved}>
+                                              {locale === "es" ? "Aceptar" : "Accept"}
+                                            </Button>
+                                          </form>
+                                          {itemDescValue ? (
+                                            itemDescApproved ? (
+                                              <form action={markTranslationDraftAction}>
+                                                <input type="hidden" name="entityType" value="ITEM" />
+                                                <input type="hidden" name="entityId" value={item.id} />
+                                                <input type="hidden" name="locale" value={targetLocale} />
+                                                <input type="hidden" name="field" value="description" />
+                                                <Button type="submit" size="sm" variant="outline">
+                                                  {locale === "es" ? "Editar" : "Edit"}
+                                                </Button>
+                                              </form>
+                                            ) : null
+                                          ) : null}
+                                          {item.prices.map((price) => {
+                                            if (isDefaultPriceLabel(price.label)) return null;
+                                            const priceEntry = translationMap.get(`${targetLocale}:ITEM_PRICE:${price.id}:label`);
+                                            const priceLabelValue = priceEntry?.value ?? (price.label ?? "");
+                                            const priceApproved = priceEntry?.status === "APPROVED";
+                                            return (
+                                              <div key={price.id} className="space-y-2">
+                                                <form action={saveTranslationOverrideAction} className="flex gap-2">
+                                                  <input type="hidden" name="entityType" value="ITEM_PRICE" />
+                                                  <input type="hidden" name="entityId" value={price.id} />
+                                                  <input type="hidden" name="locale" value={targetLocale} />
+                                                  <input type="hidden" name="field" value="label" />
+                                                  <input type="hidden" name="sourceHash" value={getSourceHash(price.label ?? "")} />
+                                                  <Input
+                                                    name="value"
+                                                    defaultValue={priceLabelValue}
+                                                    placeholder={`${translationsT.fieldPriceLabel} (${price.currency})`}
+                                                    readOnly={priceApproved}
+                                                  />
+                                                  <input type="hidden" name="approve" value="1" />
+                                                  <Button type="submit" size="sm" variant="outline" disabled={priceApproved}>
+                                                    {locale === "es" ? "Aceptar" : "Accept"}
+                                                  </Button>
+                                                </form>
+                                                {priceApproved ? (
+                                                  <form action={markTranslationDraftAction}>
+                                                    <input type="hidden" name="entityType" value="ITEM_PRICE" />
+                                                    <input type="hidden" name="entityId" value={price.id} />
+                                                    <input type="hidden" name="locale" value={targetLocale} />
+                                                    <input type="hidden" name="field" value="label" />
+                                                    <Button type="submit" size="sm" variant="outline">
+                                                      {locale === "es" ? "Editar" : "Edit"}
+                                                    </Button>
+                                                  </form>
+                                                ) : null}
+                                              </div>
+                                            );
+                                          })}
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })
+                        )}
+                      </TabsContent>
+                    );
+                  })}
+                </Tabs>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

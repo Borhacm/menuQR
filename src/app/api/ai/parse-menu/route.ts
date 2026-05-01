@@ -3,11 +3,15 @@ import { openai } from "@/lib/ai/client";
 import { auth } from "@/auth";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 import { logEvent, metricIncr } from "@/lib/observability";
+import { isTrustedRequestOrigin } from "@/lib/security/request-origin";
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(req: Request) {
+  if (!isTrustedRequestOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

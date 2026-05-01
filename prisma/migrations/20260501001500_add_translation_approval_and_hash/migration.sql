@@ -1,0 +1,11 @@
+DO $$
+BEGIN
+  CREATE TYPE "TranslationStatus" AS ENUM ('DRAFT', 'APPROVED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE "Translation"
+ADD COLUMN IF NOT EXISTS "status" "TranslationStatus" NOT NULL DEFAULT 'DRAFT',
+ADD COLUMN IF NOT EXISTS "sourceHash" TEXT,
+ADD COLUMN IF NOT EXISTS "approvedAt" TIMESTAMP(3);

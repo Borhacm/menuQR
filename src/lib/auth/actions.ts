@@ -4,7 +4,7 @@ import { hash } from "bcryptjs";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
-import { signIn } from "@/auth";
+import { auth, signIn } from "@/auth";
 
 export async function registerAction(formData: FormData) {
   const name = String(formData.get("name") ?? "");
@@ -71,4 +71,56 @@ export async function loginAction(formData: FormData) {
     password,
     redirectTo: "/app",
   });
+}
+
+export async function completeOnboardingAction(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const slugInput = String(formData.get("slug") ?? "").trim();
+  const defaultLocale = String(formData.get("defaultLocale") ?? "en").trim();
+  const defaultCurrency = String(formData.get("defaultCurrency") ?? "EUR").trim().toUpperCase();
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/login");
+
+  const existingMembership = await db.membership.findFirst({
+    where: { userId },
+    include: { organization: { include: { resources: true } } },
+  });
+  if (existingMembership) {
+    redirect("/app");
+  }
+
+  const baseSlug = slugify(slugInput || name) || "restaurant";
+  let orgSlug = baseSlug;
+  let i = 1;
+  while (await db.organization.findUnique({ where: { slug: orgSlug } })) {
+    orgSlug = `${baseSlug}-${i++}`;
+  }
+
+  const org = await db.organization.create({
+    data: {
+      name: name || "My Restaurant",
+      slug: orgSlug,
+      memberships: {
+        create: {
+          userId,
+          role: "OWNER",
+        },
+      },
+    },
+  });
+
+  await db.resource.create({
+    data: {
+      organizationId: org.id,
+      slug: orgSlug,
+      name: name || "My Restaurant",
+      defaultLocale,
+      defaultCurrency,
+      enabledLocales: Array.from(new Set([defaultLocale, "en", "es"])),
+      enabledCurrencies: [defaultCurrency],
+    },
+  });
+
+  redirect("/app");
 }

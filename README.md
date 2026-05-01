@@ -9,7 +9,7 @@ Menuly is a full-stack multilingual QR menu SaaS for restaurants, inspired by Re
 - Prisma + PostgreSQL
 - Auth.js v5 (credentials + Google)
 - Stripe subscriptions (checkout, portal, webhook)
-- OpenAI (menu translation + image parse endpoint)
+- OpenAI or LibreTranslate (menu translation) + OpenAI (image parse endpoint)
 - next-intl (EN/ES marketing i18n, menu locales expandable)
 - Playwright smoke tests
 
@@ -21,7 +21,7 @@ Menuly is a full-stack multilingual QR menu SaaS for restaurants, inspired by Re
 npm install
 ```
 
-2. Start PostgreSQL:
+2. Start infrastructure (PostgreSQL + LibreTranslate):
 
 ```bash
 docker compose up -d
@@ -32,6 +32,23 @@ docker compose up -d
 ```bash
 cp .env.example .env
 ```
+
+Translation defaults in `.env.example` are ready for free local translation via LibreTranslate:
+
+```env
+TRANSLATE_PROVIDER="auto"
+LIBRETRANSLATE_URL="http://127.0.0.1:5001/translate"
+LIBRETRANSLATE_PRIMARY_LOCALES="en,es,fr,de,it,pt,ca,ko"
+LIBRETRANSLATE_SOURCE_LOCALE="auto"
+# Optional fallback endpoint for specific locales (example: nl,ru)
+LIBRETRANSLATE_URL_SECONDARY="http://127.0.0.1:5002/translate"
+LIBRETRANSLATE_SECONDARY_LOCALES="nl,ru"
+```
+
+Docker Compose includes two LibreTranslate services for local development:
+
+- `libretranslate` on `:5001` (general locales)
+- `libretranslate_secondary` on `:5002` (focused on `nl,ru`)
 
 4. Push schema + seed:
 
@@ -78,6 +95,7 @@ docker compose -f docker-compose.observability.yml up -d
 - Grafana: `http://localhost:3001` (`admin` / `admin`)
 - App metrics (JSON): `/api/internal/metrics`
 - App metrics (Prometheus): `/api/internal/metrics/prometheus`
+- Grafana dashboard preloaded: **Menuly Overview** (folder `Menuly`)
 
 If you set `METRICS_TOKEN`, update `authorization.credentials` in `monitoring/prometheus.yml` to match.
 
@@ -87,4 +105,4 @@ If you set `METRICS_TOKEN`, update `authorization.credentials` in `monitoring/pr
 - Use Neon/Supabase Postgres
 - Configure wildcard DNS (`*.yourdomain.com`)
 - Set Stripe webhook to `/api/stripe/webhook`
-- Set `OPENAI_API_KEY`, `RESEND_API_KEY`, OAuth secrets
+- Set `RESEND_API_KEY`, OAuth secrets, and your preferred translation provider env vars

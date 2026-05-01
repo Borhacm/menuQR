@@ -3,7 +3,7 @@ import { metricSnapshot } from "@/lib/observability";
 
 function isAuthorized(req: Request) {
   const token = process.env.METRICS_TOKEN;
-  if (!token) return true;
+  if (!token) return process.env.NODE_ENV !== "production";
   return req.headers.get("authorization") === `Bearer ${token}`;
 }
 

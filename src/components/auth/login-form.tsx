@@ -8,9 +8,21 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-export function LoginForm() {
+function resolveNextPath(value: string | null) {
+  if (!value || !value.startsWith("/")) return "/app";
+  return value;
+}
+
+export function LoginForm({
+  googleEnabled,
+  nextPath = "/app",
+}: {
+  googleEnabled: boolean;
+  nextPath?: string;
+}) {
   const [pending, setPending] = useState(false);
-  const [showGoogle, setShowGoogle] = useState(true);
+  const [showGoogle, setShowGoogle] = useState(googleEnabled);
+  const safeNextPath = resolveNextPath(nextPath);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,12 +38,12 @@ export function LoginForm() {
       toast.error("Invalid email or password");
       return;
     }
-    window.location.href = "/app";
+    window.location.href = safeNextPath;
   }
 
   return (
     <div className="space-y-4">
-      <form onSubmit={onSubmit} className="space-y-3">
+      <form onSubmit={onSubmit} method="post" action="/login" className="space-y-3">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" required autoComplete="email" />
@@ -67,7 +79,9 @@ export function LoginForm() {
             type="button"
             variant="outline"
             className="w-full"
-            onClick={() => signIn("google", { callbackUrl: "/app" }).catch(() => setShowGoogle(false))}
+            onClick={() =>
+              signIn("google", { callbackUrl: safeNextPath }).catch(() => setShowGoogle(false))
+            }
           >
             Continue with Google
           </Button>

@@ -21,12 +21,12 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "Personalized QR menu domain",
     hero: "A short, memorable subdomain for your restaurant",
     description:
-      "Pick from a curated set of short root domains and combine them with your brand to create a personal web address for your QR menu. No registrations, no delays — go live the moment you choose your slug.",
+      "Pick from a curated set of short root domains and combine them with your brand to create a personal web address for your QR menu. Pro plans can also connect a custom CNAME domain.",
     bullets: [
       "20+ short root domains to choose from",
-      "Instant availability check & reservation",
-      "Change your slug anytime (legacy QR codes keep redirecting)",
-      "Optional custom CNAME for enterprise plans",
+      "Instant slug setup and availability validation",
+      "Legacy QR slug redirects supported",
+      "Custom CNAME on Pro plan",
     ],
     iconKey: "domain",
   },
@@ -35,10 +35,10 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "Easy online menu management",
     hero: "Build and update your menu in minutes, not hours",
     description:
-      "Add categories and items with intuitive drag-and-drop controls, reorder dishes with a click, and let our AI photo-parsing assistant turn an existing PDF or photo into a structured menu in seconds.",
+      "Add categories and items with intuitive controls, reorder your content quickly, and use the AI photo parsing assistant to bootstrap from menu photos.",
     bullets: [
-      "Drag-and-drop categories and items",
-      "AI menu extraction from photos & PDFs",
+      "Fast create/edit flow for categories and items",
+      "AI menu extraction from photos",
       "Built-in stock photo gallery",
       "Bulk-edit prices, allergens and tags",
     ],
@@ -49,12 +49,12 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "Online menu analytics",
     hero: "Real insights about how guests use your menu",
     description:
-      "See QR scans, page views, language preferences, devices and returning visitors in clean, real-time charts. Use the data to optimize your menu, understand peak hours, and prove ROI.",
+      "See QR scans, page views, language preferences, devices and returning visitors. Paid plans unlock trend charts and rankings to optimize performance.",
     bullets: [
-      "Scans & views by day, week and month",
-      "Language ranking — know what your guests prefer",
+      "Scans & views with event timeline",
+      "Language and device ranking on paid plans",
       "Device breakdown (iOS, Android, desktop)",
-      "Returning visitors and average session duration",
+      "Returning visitors insight",
     ],
     iconKey: "analytics",
   },
@@ -63,11 +63,11 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "Flexible templates for online menu",
     hero: "Beautiful, responsive templates that match your brand",
     description:
-      "Pick from our curated library of templates, then customize colors, typography, hero imagery and section layouts. Every template is mobile-first, fast, and accessible by default.",
+      "Pick from curated templates, then customize colors, typography and density settings. Every template is mobile-first and responsive.",
     bullets: [
-      "Multiple ready-made templates",
+      "Classic template on Free, full template library on Starter+",
       "Live preview while you customize",
-      "Custom fonts, colors, hero imagery",
+      "Custom fonts, colors and layout density",
       "Mobile-first, fast and accessible",
     ],
     iconKey: "templates",
@@ -91,11 +91,11 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "Media asset & global CDN",
     hero: "Your photos, served fast everywhere",
     description:
-      "Every image you upload is processed into multiple sizes and formats (WebP and responsive variants) and served from a global CDN, so the right version reaches every device — no matter where your guests are.",
+      "Every image can be delivered through an external CDN base URL and responsive WebP variants, so you can serve optimized media globally.",
     bullets: [
-      "Automatic WebP + responsive variants",
-      "Built-in image editor & cropper",
-      "Global CDN with regional caching",
+      "WebP variant URLs for optimized rendering",
+      "Secure upload validation",
+      "CDN base URL support",
       "Lazy loading + blur placeholders",
     ],
     iconKey: "media",
@@ -105,11 +105,11 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "Multi-currency menu",
     hero: "Show prices in multiple currencies, all at once",
     description:
-      "Support guests from anywhere. Configure several currencies on your menu and add multiple prices per dish for portions, sizes or alternative currencies — perfect for tourist areas and flexible pricing.",
+      "Support guests from anywhere. Configure multiple currencies and add multiple prices per dish for portions, sizes or alternative currencies.",
     bullets: [
       "All popular currencies supported",
       "Multiple prices per dish (portions, sizes, currencies)",
-      "Currency switcher in every template",
+      "Currency selector in modern template",
       "Auto-formatted using guest's locale",
     ],
     iconKey: "currency",
@@ -119,10 +119,9 @@ export const SOLUTIONS: SolutionPage[] = [
     title: "QR code menu generator",
     hero: "Print-ready QR codes that actually look on-brand",
     description:
-      "Customize your QR codes with your logo, brand colors and unique eye styles, then export print-ready PNG, SVG or PDF. Save multiple designs per resource and reprint anytime.",
+      "Customize your QR codes with brand colors, save designs per resource and export print-ready PNG, SVG or PDF.",
     bullets: [
-      "Logo embedding with safe-zone control",
-      "Color & gradient customization",
+      "Brand color customization",
       "Save and reuse multiple QR designs",
       "Export PNG, SVG and print-ready PDF",
     ],

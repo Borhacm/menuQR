@@ -8,15 +8,58 @@
     "blog": "Blog",
     "signIn": "Entrar",
     "signUp": "Crear cuenta",
-    "dashboard": "Panel"
+    "dashboard": "Panel",
+    "toggleMenu": "Abrir/cerrar menú"
   },
   "Hero": {
     "badge": "Menús QR con IA",
     "title": "Menús QR multilingües para restaurantes modernos",
-    "subtitle": "Crea menús digitales traducidos con IA, subdominios personalizados, plantillas preciosas y escaneos ilimitados. Plan gratuito disponible — en vivo en minutos.",
+    "subtitle": "Digitaliza y crea tu menú en minutos. Personaliza cómo lo ven tus clientes y recibe análisis en tiempo real de lo que más les interesa.",
     "ctaPrimary": "Empezar gratis",
-    "ctaSecondary": "Ver precios",
-    "trustedBy": "Cientos de restaurantes en todo el mundo confían en nosotros"
+    "ctaSecondary": "Ver planes",
+    "trustedBy": "Cientos de restaurantes en todo el mundo confían en nosotros",
+    "preview": {
+      "badgeLanguages": "25+ idiomas",
+      "badgeScans": "Escaneos ilimitados",
+      "badgeAi": "IA en Starter/Pro",
+      "admin": {
+        "label": "Panel móvil",
+        "title": "Carga de ítems",
+        "live": "LIVE",
+        "fields": {
+          "nameLabel": "Nombre",
+          "nameValue": "Pizza Trufa",
+          "descriptionLabel": "Descripción",
+          "descriptionValue": "Mozzarella, trufa negra y setas",
+          "priceLabel": "Precio",
+          "currencyLabel": "Moneda"
+        },
+        "uploadCta": "+ Añadir foto del plato",
+        "uploadHelp": "JPG/PNG, máximo 5 MB",
+        "actions": {
+          "saveDraft": "Guardar borrador",
+          "publish": "Publicar ítem"
+        },
+        "recentLabel": "Últimos añadidos",
+        "recentItems": [
+          "Risotto ai funghi",
+          "Tiramisù",
+          "Bruschetta al pomodoro"
+        ]
+      },
+      "phone": {
+        "menuLabel": "Menú QR",
+        "category1": "Entrantes",
+        "category2": "Pasta",
+        "category3": "Pizza",
+        "category4": "Postres",
+        "dishDescription": "Pasta artesanal con salsa de carne cocinada a fuego lento",
+        "bestSeller": "Recomendación del chef"
+      },
+      "menu": {
+        "tag": "Vegano"
+      }
+    }
   },
   "Features": {
     "eyebrow": "Todo lo que necesitas para lanzar un menú digital en minutos",
@@ -24,7 +67,7 @@
     "items": {
       "domain": {
         "title": "Subdominio QR personalizado",
-        "description": "Combina tu marca con uno de nuestros 20+ dominios cortos para crear una dirección única para tu menú QR."
+        "description": "Combina tu marca con uno de nuestros dominios cortos para crear una dirección única para tu menú QR."
       },
       "management": {
         "title": "Gestión de menú sencilla",
@@ -32,7 +75,7 @@
       },
       "analytics": {
         "title": "Analíticas de menú online",
-        "description": "Gráficos en tiempo real de escaneos QR y visitas, con rankings por idioma, dispositivo y visitantes recurrentes."
+        "description": "Mide escaneos QR y visitas de tu menú. En planes de pago desbloqueas gráficos y rankings por idioma y dispositivo."
       },
       "templates": {
         "title": "Plantillas flexibles",
@@ -43,8 +86,8 @@
         "description": "Traducido automáticamente con IA entrenada en contexto culinario. Activa idiomas y ajusta traducciones manualmente."
       },
       "media": {
-        "title": "CDN global de imágenes",
-        "description": "Almacenamiento distribuido con CDN. Cada imagen se prepara en WebP y variantes responsive para cada dispositivo."
+        "title": "Imágenes optimizadas",
+        "description": "Sube imágenes con validación segura y sírvelas optimizadas. En Pro puedes usar transformaciones CDN y variantes WebP."
       },
       "currency": {
         "title": "Menú multimoneda",
@@ -52,72 +95,185 @@
       },
       "qr": {
         "title": "Generador de códigos QR",
-        "description": "Generador integrado con logo, colores y estilos. Descarga PNG, SVG o PDF listos para imprimir."
+        "description": "Genera y descarga QR en PNG, SVG o PDF. En planes de pago puedes aplicar branding y guardar diseños."
       }
-    }
+    },
+    "learnMore": "Ver más"
   },
   "Templates": {
-    "eyebrow": "Capturas",
+    "eyebrow": "Panel en vivo",
     "title": "Diseños y plantillas de menú",
-    "subtitle": "Descubre cómo puede verse tu menú QR en distintas plantillas."
+    "subtitle": "Puedes configurar el diseño según tu patrón de colores de marca o escoger uno de los estilos predeterminados.",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "menuLabel": "Menú",
+    "dish": "Plato {number}"
   },
   "Trust": {
     "eyebrow": "Sobre nosotros",
     "title": "Por qué los restaurantes confían en Menuly",
-    "intro": "Más allá de un menú digital básico: herramientas creadas con feedback real, desde menús QR multilingües hasta acceso global ultrarrápido.",
+    "intro": "Menuly combina diseño, velocidad y control operativo para que tu menú digital esté a la altura de la experiencia que ofreces en sala.",
+    "highlights": [
+      "Planes claros para cada etapa: Free, Starter y Pro",
+      "Publicación rápida desde un panel pensado para operaciones reales",
+      "Escalado progresivo sin fricción ni complejidad técnica"
+    ],
     "items": [
       {
-        "title": "Traducción AI superior",
-        "description": "IA entrenada en contexto culinario para traducciones precisas y naturales."
+        "title": "Traducción IA con control editorial",
+        "description": "Amplía idiomas en Starter y Pro, acelera con IA y mantén el tono de tu marca con overrides manuales."
       },
       {
-        "title": "Páginas web personalizadas",
-        "description": "Destaca con un menú alojado en un dominio corto y memorable."
+        "title": "Panel admin orientado a negocio",
+        "description": "Gestiona menús, ítems, traducciones, QR y configuración clave desde un flujo único y claro."
       },
       {
-        "title": "Plantillas customizables",
-        "description": "Plantillas elegantes y responsive con control total sobre fuentes, colores y layouts."
+        "title": "Plantillas con identidad de marca",
+        "description": "Selecciona plantilla y define colores, tipografía y densidad para una presencia visual coherente."
       },
       {
-        "title": "Escaneos y vistas ilimitadas",
-        "description": "Sin tarifas ocultas. Tu suscripción cubre vistas, escaneos e interacciones ilimitadas."
+        "title": "QR listo para producción",
+        "description": "Exporta en PNG, SVG y PDF, y aplica branding en planes de pago para mantener consistencia visual."
       },
       {
-        "title": "Acceso global ultrarrápido",
-        "description": "Infraestructura distribuida para que tu menú cargue al instante en cualquier parte del mundo."
+        "title": "Precios multimoneda para zonas mixtas",
+        "description": "Muestra varias divisas en planes de pago y mejora la comprensión de precios para cliente local e internacional."
       },
       {
-        "title": "Innovación continua",
-        "description": "Nuevas funciones regularmente, basadas en el feedback de nuestros clientes."
+        "title": "Dominio propio cuando tu marca lo exige",
+        "description": "Empieza con dominios cortos del sistema y escala a dominio personalizado en Pro."
       }
     ]
   },
+  "AdminPreview": {
+    "eyebrow": "Capturas",
+    "title": "Gestiona tu menú desde el panel admin",
+    "subtitle": "Estas vistas reflejan las pantallas actuales del panel: métricas básicas, menús, ítems, traducciones, QR y ajustes del recurso.",
+    "ctaOpenPanel": "Ver panel real",
+    "noteAuth": "Requiere acceso",
+    "liveTag": "Vista real",
+    "screens": {
+      "dashboard": {
+        "title": "Panel",
+        "body": "métricas y resumen del espacio",
+        "chips": ["Menús", "Ítems", "Eventos"],
+        "rows": ["Menús: 3", "Ítems: 24", "Plan: Free"]
+      },
+      "menuEditor": {
+        "title": "Menús",
+        "body": "crear menú y ver menús existentes",
+        "chips": ["Crear", "Listado", "Categorías"],
+        "rows": ["Menú cena", "Menú mediodía", "3 categorías"]
+      },
+      "translations": {
+        "title": "Traducciones",
+        "body": "cola IA y últimas traducciones",
+        "chips": ["Cola IA", "RECURSO", "Idioma"],
+        "rows": ["es · nombre · IA", "en · descripción · IA", "fr · nombre · MANUAL"]
+      },
+      "qrBuilder": {
+        "title": "Constructor QR",
+        "body": "guardar diseño y exportar PNG/SVG/PDF",
+        "chips": ["Color puntos", "URL logo", "Exportar"],
+        "rows": ["Exportar PNG", "Exportar SVG", "Exportar PDF"]
+      },
+      "items": {
+        "title": "Items",
+        "body": "crear ítem y revisar precios",
+        "chips": ["Nombre", "Precio", "Moneda"],
+        "rows": ["Margarita", "EUR 12,50", "Categoría principal"]
+      },
+      "resource": {
+        "title": "Recurso",
+        "body": "slug, locales, monedas y tema",
+        "chips": ["Slug", "Idioma", "Tema"],
+        "rows": ["la-trattoria", "es / en", "Dark Gold"]
+      }
+    }
+  },
   "Steps": {
-    "eyebrow": "Pasos sencillos para",
-    "title": "Unirte a nuestra plataforma",
+    "eyebrow": "Implementación guiada",
+    "title": "Tu menú digital listo en pocos pasos",
     "items": [
       {
-        "title": "Registro",
-        "description": "Regístrate, elige un plan y añade un método de pago para tu suscripción mensual."
+        "title": "Crea tu cuenta",
+        "description": "Activa tu espacio en minutos y arranca con Free o el plan que mejor encaje contigo."
       },
       {
-        "title": "Crea tu página",
-        "description": "Configura tu negocio, elige un dominio corto y construye tu menú con categorías e ítems."
+        "title": "Configura tu experiencia",
+        "description": "Define branding, dominio, idioma y estructura de menú desde el panel admin."
       },
       {
-        "title": "Genera e imprime QR",
-        "description": "Genera un código QR e imprímelo en cualquier superficie de tu local."
+        "title": "Publica y optimiza",
+        "description": "Lanza tu QR, comparte en sala y mejora con analíticas y ajustes continuos."
       }
     ]
   },
   "Pricing": {
     "eyebrow": "Elige tu plan Menuly",
     "title": "Planes de precios flexibles",
-    "subtitle": "Empieza gratis, mejora cuando quieras. Sin tarifas ocultas.",
+    "subtitle": "Empieza en Free y escala a Starter o Pro cuando necesites más alcance. Sin sorpresas en facturación.",
     "perMonth": "/ mes",
     "vat": "+ IVA",
     "trial": "Prueba {days} días",
-    "cta": "Seleccionar"
+    "cta": "Seleccionar",
+    "mostPopular": "Más popular",
+    "plans": {
+      "free": {
+        "name": "Gratis",
+        "description": "Perfecto para probar Menuly con un menú pequeño.",
+        "features": [
+          "Asistente de configuración para lanzar rápido",
+          "1 subdominio con menú",
+          "Hasta 25 ítems por menú",
+          "1 foto por ítem",
+          "Menú en un solo idioma",
+          "Precios en una sola moneda",
+          "Plantilla Classic",
+          "Exportación QR básica (PNG/SVG/PDF)",
+          "Resumen de analíticas básicas"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "Para restaurantes en crecimiento que necesitan más capacidad.",
+        "features": [
+          "Todo lo incluido en Free",
+          "1 subdominio con menú",
+          "Hasta 150 ítems por menú",
+          "5 fotos por ítem",
+          "Traducción IA completa",
+          "Extracción de menú desde fotos con IA completa",
+          "Precios en múltiples monedas",
+          "Plantillas Classic/Modern/Grid",
+          "QR con branding y diseños guardados",
+          "Gráficos y rankings de analíticas",
+          "Overrides manuales de traducción",
+          "Selector de idioma y moneda en el menú público",
+          "Etiquetas de alérgenos"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Para cadenas y menús grandes con máxima flexibilidad.",
+        "features": [
+          "Todo lo incluido en Starter",
+          "1 subdominio con menú",
+          "Hasta 999 ítems por menú",
+          "10 fotos por ítem",
+          "Traducción IA completa",
+          "Extracción de menú desde fotos con IA completa",
+          "Precios en múltiples monedas",
+          "Plantillas Classic/Modern/Grid",
+          "Transformaciones CDN de imágenes",
+          "Soporte de dominio personalizado",
+          "Analíticas avanzadas",
+          "Hasta 10 cuentas de gestor",
+          "Soporte prioritario",
+          "Ayuda para digitalizar el menú"
+        ]
+      }
+    }
   },
   "FAQ": {
     "eyebrow": "Preguntas frecuentes",
@@ -129,7 +285,7 @@
       },
       {
         "q": "¿Cuánto cuesta la suscripción?",
-        "a": "Menuly ofrece un plan gratuito con hasta 25 ítems, tráfico ilimitado y sin anuncios. Los planes Standard empiezan en 9,99 €/mes."
+        "a": "Menuly ofrece un plan Free para empezar sin riesgo y planes Starter y Pro desde 9,99 €/mes para desbloquear funciones avanzadas."
       },
       {
         "q": "¿Puedo usar mi propio subdominio?",
@@ -137,11 +293,11 @@
       },
       {
         "q": "¿Soportan menús multilingües?",
-        "a": "Por supuesto. Tu menú se traduce automáticamente a los idiomas que actives, y puedes ajustar las traducciones manualmente."
+        "a": "Sí. En Starter y Pro puedes traducir tu menú con IA y ajustar cada traducción manualmente cuando lo necesites."
       },
       {
         "q": "¿Puedo personalizar el diseño?",
-        "a": "Sí, tienes control total. Elige plantillas responsive y personaliza fuentes, colores e imágenes."
+        "a": "Sí, tienes control total. Elige plantilla, personaliza colores, tipografía y densidad del diseño para que encaje con tu marca."
       },
       {
         "q": "¿Hay límite de vistas o tráfico?",
@@ -169,15 +325,127 @@
     "title": "Suscríbete a las novedades",
     "placeholder": "tu@email.com",
     "cta": "Suscribir",
-    "success": "¡Gracias! Te avisamos."
+    "success": "¡Gracias! Te avisamos.",
+    "error": "Ha ocurrido un error"
   },
   "Footer": {
+    "description": "Plataforma integral para crear, diseñar y gestionar menús QR digitales con un panel pensado para operaciones reales.",
     "rights": "Todos los derechos reservados.",
     "links": "Enlaces",
     "solutions": "Soluciones",
     "company": "Empresa",
     "privacy": "Política de privacidad",
     "terms": "Términos de servicio",
-    "legal": "Legal"
+    "legal": "Legal",
+    "solutionLinks": {
+      "personalizedDomain": "Dominio personalizado",
+      "multilingualMenu": "Menú multilingüe",
+      "menuManagement": "Gestión del menú",
+      "flexibleDesign": "Diseño flexible",
+      "qrGenerator": "Generador QR",
+      "analytics": "Analíticas",
+      "multiCurrency": "Multimoneda",
+      "mediaCdn": "Media y CDN"
+    }
+  },
+  "PricingPage": {
+    "title": "Precios simples para cualquier restaurante",
+    "subtitle": "Comienza en Free y evoluciona a Starter o Pro con total claridad de valor, precio y funcionalidades."
+  },
+  "ContactsPage": {
+    "title": "Ponte en contacto",
+    "subtitle": "¿Dudas sobre planes, integraciones o migrar tu menú? Estaremos encantados de ayudarte.",
+    "contact": {
+      "email": "Email",
+      "address": "Dirección",
+      "phone": "Teléfono"
+    },
+    "form": {
+      "name": "Nombre",
+      "email": "Email",
+      "subject": "Asunto",
+      "message": "Mensaje",
+      "send": "Enviar mensaje"
+    }
+  },
+  "SolutionsPage": {
+    "title": "Todo lo que necesitas para lanzar un menú digital",
+    "subtitle": "Ocho funciones enfocadas que trabajan juntas para impulsar miles de menús de restaurantes en todo el mundo.",
+    "items": {
+      "domain": { "title": "Dominio personalizado para menú QR", "hero": "Un subdominio corto y memorable para tu restaurante" },
+      "management": { "title": "Gestión sencilla de menú online", "hero": "Crea y actualiza tu menú en minutos, no en horas" },
+      "analytics": { "title": "Analíticas de menú online", "hero": "Información real sobre cómo tus clientes usan tu menú" },
+      "templates": { "title": "Plantillas flexibles para menú online", "hero": "Plantillas bonitas y responsive que encajan con tu marca" },
+      "multilingual": { "title": "Menú online multilingüe", "hero": "Traducido por IA entrenada en contexto culinario" },
+      "media": { "title": "Media optimizada", "hero": "Tus fotos, rápidas en cualquier lugar" },
+      "currency": { "title": "Menú multimoneda", "hero": "Muestra precios en varias monedas a la vez" },
+      "qr": { "title": "Generador de menú con código QR", "hero": "Códigos QR listos para imprimir y alineados con tu marca" }
+    }
+  },
+  "SolutionDetailPage": {
+    "ctaPrimary": "Empezar gratis",
+    "ctaSecondary": "Ver precios",
+    "items": {
+      "domain": {
+        "title": "Dominio personalizado para menú QR",
+        "hero": "Un subdominio corto y memorable para tu restaurante",
+        "description": "Elige entre un conjunto de dominios raíz cortos y combínalos con tu marca para crear una dirección web personalizada para tu menú QR. Sin registros ni esperas: publica en cuanto eliges tu slug.",
+        "bullets": ["Dominios raíz cortos para elegir", "Configuración rápida de slug y disponibilidad", "Cambia tu slug cuando quieras (los QR antiguos siguen redirigiendo)", "Dominio personalizado en plan Pro"]
+      },
+      "management": {
+        "title": "Gestión sencilla de menú online",
+        "hero": "Crea y actualiza tu menú en minutos, no en horas",
+        "description": "Añade categorías e ítems con controles intuitivos de arrastrar y soltar, reordena platos con un clic y deja que nuestro asistente IA convierta un PDF o foto en un menú estructurado en segundos.",
+        "bullets": ["Categorías e ítems con arrastrar y soltar", "Extracción de menú con IA desde fotos y PDFs", "Galería interna de fotos de stock", "Edición masiva de precios, alérgenos y etiquetas"]
+      },
+      "analytics": {
+        "title": "Analíticas de menú online",
+        "hero": "Información real sobre cómo tus clientes usan tu menú",
+        "description": "Consulta escaneos QR, vistas, idiomas, dispositivos y visitantes recurrentes en gráficos limpios y en tiempo real. Usa estos datos para optimizar el menú, entender horas pico y demostrar ROI.",
+        "bullets": ["Escaneos y vistas por día, semana y mes", "Ranking por idioma para saber qué prefieren tus clientes", "Desglose por dispositivo (iOS, Android, escritorio)", "Visitantes recurrentes y duración media de sesión"]
+      },
+      "templates": {
+        "title": "Plantillas flexibles para menú online",
+        "hero": "Plantillas bonitas y responsive que encajan con tu marca",
+        "description": "Elige de nuestra librería de plantillas y personaliza colores, tipografía, imágenes principales y secciones. Cada plantilla es mobile-first, rápida y accesible por defecto.",
+        "bullets": ["Varias plantillas listas para usar", "Vista previa en vivo mientras personalizas", "Fuentes, colores e imagen principal personalizables", "Mobile-first, rápido y accesible"]
+      },
+      "multilingual": {
+        "title": "Menú online multilingüe",
+        "hero": "Traducido por IA entrenada en contexto culinario",
+        "description": "Tu menú se traduce automáticamente a los idiomas seleccionados con una IA entrenada en platos, ingredientes y técnicas de cocina. Activa o desactiva idiomas cuando quieras y corrige cualquier traducción manualmente.",
+        "bullets": ["Más de 25 idiomas incluyendo catalán, coreano e hindi", "Traducciones conscientes del contexto culinario (sin resultados robóticos)", "Ajustes manuales por plato o categoría", "Selector de idioma integrado en todas las plantillas"]
+      },
+      "media": {
+        "title": "Media optimizada",
+        "hero": "Tus fotos, rápidas en cualquier lugar",
+        "description": "Cada imagen que subes se optimiza para servir versiones más ligeras. En Pro puedes activar transformaciones CDN y variantes WebP responsive.",
+        "bullets": ["Variantes WebP y responsive", "Subida segura con validación", "Transformaciones CDN en Pro", "Carga diferida con placeholders blur"]
+      },
+      "currency": {
+        "title": "Menú multimoneda",
+        "hero": "Muestra precios en varias monedas a la vez",
+        "description": "Atiende clientes de cualquier lugar. Configura varias monedas en tu menú y añade múltiples precios por plato para porciones, tamaños o monedas alternativas; ideal para zonas turísticas y precios flexibles.",
+        "bullets": ["Compatibilidad con monedas populares", "Múltiples precios por plato (porciones, tamaños, monedas)", "Selector de moneda en todas las plantillas", "Formato automático según el locale del cliente"]
+      },
+      "qr": {
+        "title": "Generador de menú con código QR",
+        "hero": "Códigos QR listos para imprimir y alineados con tu marca",
+        "description": "Personaliza tus códigos QR con logo, colores de marca y estilos únicos, y exporta en PNG, SVG o PDF listos para imprenta. Guarda múltiples diseños por recurso y reimprime cuando quieras.",
+        "bullets": ["Inserción de logo con control de zona segura", "Personalización de color y degradado", "Guarda y reutiliza múltiples diseños QR", "Exporta PNG, SVG y PDF listo para imprimir"]
+      }
+    }
+  },
+  "BlogPage": {
+    "title": "Lo último del blog de Menuly",
+    "subtitle": "Novedades de producto, consejos de tecnología para restaurantes y casos reales.",
+    "posts": {
+      "online-ordering-delivery": { "title": "Pedidos online y delivery ahora en beta", "excerpt": "Recibe pedidos directamente desde tu menú QR, integrado con los principales proveedores de delivery y tu TPV favorito.", "body": "Estamos lanzando una nueva capa de pedidos que vive sobre tu menú..." },
+      "new-codewind-template": { "title": "Presentamos la nueva plantilla Codewind", "excerpt": "Una plantilla moderna y atrevida para coctelerías y bistrós actuales. Primero oscuro, rápida en cualquier dispositivo.", "body": "Codewind es nuestra plantilla más ambiciosa hasta la fecha..." },
+      "languages-update": { "title": "Menuly añade catalán, coreano e hindi", "excerpt": "Nuestra IA culinaria ahora traduce a 25 idiomas, con soporte más completo para cocinas asiáticas.", "body": "Hoy añadimos catalán, coreano e hindi a nuestro conjunto de traducciones..." },
+      "qr-design-best-practices": { "title": "Mejores prácticas de diseño QR para restaurantes", "excerpt": "Contraste de color, corrección de errores y ubicación física: una guía rápida para obtener más escaneos.", "body": "Un código QR que no se escanea es solo decoración..." },
+      "multi-currency-prices": { "title": "Por qué añadimos precios multimoneda a todos los planes", "excerpt": "Zonas turísticas, estaciones de esquí y puertos de crucero: cómo los menús multimoneda mejoran conversión y ticket medio.", "body": "La mayoría de herramientas de menú digital obligan a usar una sola moneda..." },
+      "case-study-trattoria": { "title": "Cómo La Trattoria redujo costes de impresión un 92%", "excerpt": "Un pequeño restaurante familiar en Valencia cambió a menús QR y no volvió atrás.", "body": "La Trattoria solía reimprimir sus menús de temporada cuatro veces al año..." }
+    }
   }
 }

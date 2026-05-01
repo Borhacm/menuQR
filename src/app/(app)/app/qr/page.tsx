@@ -1,78 +1,114 @@
 import { db } from "@/lib/db";
 import { requireTenantContext } from "@/lib/auth/guards";
-import { saveQrDesignAction } from "@/lib/admin/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { canUseQrBranding } from "@/config/plans";
+import { getAdminLocale, getAdminMessages } from "@/lib/admin/i18n";
+import { QrEditorForm } from "@/app/(app)/app/qr/qr-editor-form";
+import { deleteQrDesignAction, renameQrDesignAction } from "@/lib/admin/qr-actions";
 
 export default async function QrPage() {
   const ctx = await requireTenantContext();
+  const locale = await getAdminLocale();
+  const t = getAdminMessages(locale).qr;
+  const canBrandQr = canUseQrBranding(ctx.organization.planId);
   const designs = ctx.resource
     ? await db.qrDesign.findMany({
         where: { resourceId: ctx.resource.id },
         orderBy: { createdAt: "desc" },
       })
     : [];
-  const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/m/${ctx.resource?.slug ?? "demo"}`;
+  const activeDesignId = designs[0]?.id;
+  const activeConfig = (designs[0]?.configJson ?? {}) as {
+    dotsColor?: string;
+    bgColor?: string;
+    dotStyle?: string;
+    cornerStyle?: string;
+    logoUrl?: string;
+    logoColor?: string;
+  };
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl font-bold">QR Generator</h1>
+      <h1 className="font-display text-2xl font-bold">{t.title}</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Design your QR</CardTitle>
+          <CardTitle>{t.designTitle}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={saveQrDesignAction} className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Dots color</Label>
-              <Input name="dotsColor" defaultValue="#111111" />
-            </div>
-            <div className="space-y-2">
-              <Label>Background color</Label>
-              <Input name="bgColor" defaultValue="#ffffff" />
-            </div>
-            <div className="space-y-2">
-              <Label>Corner style</Label>
-              <Input name="cornerStyle" defaultValue="square" />
-            </div>
-            <div className="space-y-2">
-              <Label>Logo URL</Label>
-              <Input name="logoUrl" placeholder="https://..." />
-            </div>
-            <div className="md:col-span-2">
-              <Button type="submit">Save design</Button>
-            </div>
-          </form>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <a href={`/api/qr/export?url=${encodeURIComponent(targetUrl)}&format=png`}>Export PNG</a>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <a href={`/api/qr/export?url=${encodeURIComponent(targetUrl)}&format=svg`}>Export SVG</a>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <a href={`/api/qr/export?url=${encodeURIComponent(targetUrl)}&format=pdf`}>Export PDF</a>
-            </Button>
-          </div>
+          <QrEditorForm
+            canBrandQr={canBrandQr}
+            resourceId={ctx.resource?.id ?? ""}
+            designId={activeDesignId}
+            initial={{
+              dotsColor: activeConfig.dotsColor ?? "#111111",
+              bgColor: activeConfig.bgColor ?? "#ffffff",
+              dotStyle: activeConfig.dotStyle ?? "square",
+              cornerStyle: activeConfig.cornerStyle ?? "square",
+              logoUrl: activeConfig.logoUrl ?? "",
+              logoColor: activeConfig.logoColor ?? "#111111",
+            }}
+            labels={t}
+          />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Saved designs</CardTitle>
+          <CardTitle>{t.savedDesignsTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           {designs.map((d) => (
             <div key={d.id} className="rounded-md border p-3">
-              <div className="font-medium">{d.name}</div>
+              <form action={renameQrDesignAction} className="mb-2 flex flex-wrap items-center gap-2">
+                <input type="hidden" name="designId" value={d.id} />
+                <input
+                  name="name"
+                  defaultValue={d.name}
+                  placeholder={t.designNamePlaceholder}
+                  className="h-9 min-w-60 rounded-md border border-input bg-background px-3 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="h-9 rounded-md border border-input px-3 text-xs font-medium text-foreground hover:bg-accent/20"
+                >
+                  {t.renameDesign}
+                </button>
+              </form>
               <div className="text-muted-foreground">
                 {new Date(d.createdAt).toLocaleString()}
               </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <a
+                  href={`/api/qr/export?resourceId=${encodeURIComponent(ctx.resource?.id ?? "")}&designId=${encodeURIComponent(d.id)}&format=png`}
+                  className="text-xs text-primary underline underline-offset-4"
+                >
+                  {t.exportPng}
+                </a>
+                <a
+                  href={`/api/qr/export?resourceId=${encodeURIComponent(ctx.resource?.id ?? "")}&designId=${encodeURIComponent(d.id)}&format=svg`}
+                  className="text-xs text-primary underline underline-offset-4"
+                >
+                  {t.exportSvg}
+                </a>
+                <a
+                  href={`/api/qr/export?resourceId=${encodeURIComponent(ctx.resource?.id ?? "")}&designId=${encodeURIComponent(d.id)}&format=pdf`}
+                  className="text-xs text-primary underline underline-offset-4"
+                >
+                  {t.exportPdf}
+                </a>
+                <form action={deleteQrDesignAction}>
+                  <input type="hidden" name="designId" value={d.id} />
+                  <button
+                    type="submit"
+                    className="text-xs text-destructive underline underline-offset-4"
+                  >
+                    {t.deleteDesign}
+                  </button>
+                </form>
+              </div>
             </div>
           ))}
-          {!designs.length && <p className="text-muted-foreground">No designs yet.</p>}
+          {!designs.length && <p className="text-muted-foreground">{t.empty}</p>}
         </CardContent>
       </Card>
     </div>

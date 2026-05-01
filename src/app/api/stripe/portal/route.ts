@@ -5,8 +5,12 @@ import { logEvent, metricIncr } from "@/lib/observability";
 import { authUrl } from "@/lib/auth/redirects";
 import { appUrl, billingStatus } from "@/lib/routes";
 import { resolveTenantMembership } from "@/lib/auth/tenant";
+import { isTrustedRequestOrigin } from "@/lib/security/request-origin";
 
 export async function POST(req: Request) {
+  if (!isTrustedRequestOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const session = await auth();
   if (!session?.user?.id) return NextResponse.redirect(authUrl(req.url, "/login"));
 

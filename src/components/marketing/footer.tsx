@@ -14,7 +14,7 @@ export function MarketingFooter() {
         <div className="space-y-4">
           <Logo />
           <p className="text-sm text-muted-foreground max-w-xs">
-            {brand.description}
+            {t("description")}
           </p>
           <div className="space-y-1.5 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
@@ -45,14 +45,14 @@ export function MarketingFooter() {
         <div>
           <h3 className="text-sm font-semibold mb-4">{t("solutions")}</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/solutions/personalized-domain" className="hover:text-foreground">Personalized domain</Link></li>
-            <li><Link href="/solutions/multilingual-menus" className="hover:text-foreground">Multilingual menu</Link></li>
-            <li><Link href="/solutions/easy-menu-management" className="hover:text-foreground">Menu management</Link></li>
-            <li><Link href="/solutions/flexible-design" className="hover:text-foreground">Flexible design</Link></li>
-            <li><Link href="/solutions/qr-code-generator" className="hover:text-foreground">QR generator</Link></li>
-            <li><Link href="/solutions/analytics" className="hover:text-foreground">Analytics</Link></li>
-            <li><Link href="/solutions/multi-currency" className="hover:text-foreground">Multi-currency</Link></li>
-            <li><Link href="/solutions/media-asset" className="hover:text-foreground">Media & CDN</Link></li>
+            <li><Link href="/solutions/personalized-domain" className="hover:text-foreground">{t("solutionLinks.personalizedDomain")}</Link></li>
+            <li><Link href="/solutions/multilingual-menus" className="hover:text-foreground">{t("solutionLinks.multilingualMenu")}</Link></li>
+            <li><Link href="/solutions/easy-menu-management" className="hover:text-foreground">{t("solutionLinks.menuManagement")}</Link></li>
+            <li><Link href="/solutions/flexible-design" className="hover:text-foreground">{t("solutionLinks.flexibleDesign")}</Link></li>
+            <li><Link href="/solutions/qr-code-generator" className="hover:text-foreground">{t("solutionLinks.qrGenerator")}</Link></li>
+            <li><Link href="/solutions/analytics" className="hover:text-foreground">{t("solutionLinks.analytics")}</Link></li>
+            <li><Link href="/solutions/multi-currency" className="hover:text-foreground">{t("solutionLinks.multiCurrency")}</Link></li>
+            <li><Link href="/solutions/media-asset" className="hover:text-foreground">{t("solutionLinks.mediaCdn")}</Link></li>
           </ul>
         </div>
 

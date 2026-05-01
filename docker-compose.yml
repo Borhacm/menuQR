@@ -11,6 +11,25 @@ services:
       - "5433:5432"
     volumes:
       - menuly_pgdata:/var/lib/postgresql/data
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: menuly-libretranslate
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    environment:
+      LT_DISABLE_WEB_UI: "true"
+      LT_LOAD_ONLY: "en,es,fr,de,it,pt,ca,ko"
+
+  libretranslate_secondary:
+    image: libretranslate/libretranslate:latest
+    container_name: menuly-libretranslate-secondary
+    restart: unless-stopped
+    ports:
+      - "5002:5000"
+    environment:
+      LT_DISABLE_WEB_UI: "true"
+      LT_LOAD_ONLY: "en,es,nl,ru"
 
 volumes:
   menuly_pgdata:

@@ -7,6 +7,7 @@ import { Check } from "lucide-react";
 import { plans } from "@/config/plans";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AuthLink } from "@/components/auth/auth-link";
 
 export function Pricing() {
   const t = useTranslations("Pricing");
@@ -41,12 +42,12 @@ export function Pricing() {
             >
               {plan.popular ? (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                  Most popular
+                  {t("mostPopular")}
                 </span>
               ) : null}
 
               <div className="flex items-baseline gap-2">
-                <h3 className="font-display text-lg font-semibold">{plan.name}</h3>
+                <h3 className="font-display text-lg font-semibold">{t(`plans.${plan.id}.name`)}</h3>
                 {plan.trialDays > 0 ? (
                   <span className="text-xs text-muted-foreground">
                     {t("trial", { days: plan.trialDays })}
@@ -63,14 +64,14 @@ export function Pricing() {
                 </span>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                {plan.description}
+                {t(`plans.${plan.id}.description`)}
               </p>
 
               <ul className="mt-6 space-y-2.5 text-sm">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
+                {plan.features.map((feature, featureIdx) => (
+                  <li key={`${plan.id}-${featureIdx}`} className="flex items-start gap-2">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>{f}</span>
+                    <span>{t(`plans.${plan.id}.features.${featureIdx}`)}</span>
                   </li>
                 ))}
               </ul>
@@ -81,7 +82,9 @@ export function Pricing() {
                   className="w-full"
                   variant={plan.popular ? "default" : "outline"}
                 >
-                  <Link href={`/register?plan=${plan.id}`}>{t("cta")}</Link>
+                  <AuthLink to="/register" query={{ plan: plan.id }}>
+                    {t("cta")}
+                  </AuthLink>
                 </Button>
               </div>
             </motion.div>

@@ -1,30 +1,18 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { db } from "@/lib/db";
+import { redirectToAuth } from "@/lib/auth/redirects";
+import { resolveTenantMembership } from "@/lib/auth/tenant";
 
 export async function requireUser() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirectToAuth("/login");
   return session.user;
 }
 
 export async function requireTenantContext() {
   const user = await requireUser();
-  const membership = await db.membership.findFirst({
-    where: { userId: user.id },
-    include: {
-      organization: {
-        include: {
-          resources: {
-            orderBy: { createdAt: "asc" },
-          },
-          subscription: true,
-        },
-      },
-    },
-  });
+  const membership = await resolveTenantMembership(user.id);
 
-  if (!membership) redirect("/onboarding");
+  if (!membership) redirectToAuth("/onboarding");
 
   return {
     user,

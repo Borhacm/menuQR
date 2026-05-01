@@ -53,3 +53,22 @@ export function inviteEmailHtml({
   </div>
 </body></html>`;
 }
+
+export function emailChangeConfirmationHtml({
+  url,
+  nextEmail,
+}: {
+  url: string;
+  nextEmail: string;
+}) {
+  return `<!doctype html>
+<html><body style="font-family:system-ui;margin:0;padding:32px;background:#fafafa;color:#0a0a0a">
+  <div style="max-width:520px;margin:0 auto;background:white;border-radius:16px;padding:32px">
+    <h1 style="margin:0 0 12px;font-size:20px">Confirm your new email</h1>
+    <p style="color:#52525b;line-height:1.6">You requested to change your account email to <strong>${nextEmail}</strong>.</p>
+    <p style="color:#52525b;line-height:1.6">Click the button below to confirm this change.</p>
+    <p><a href="${url}" style="display:inline-block;margin-top:16px;background:#f97316;color:white;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600">Confirm new email</a></p>
+    <p style="color:#71717a;font-size:12px;margin-top:24px">If you didn't request this, you can ignore this email.</p>
+  </div>
+</body></html>`;
+}

@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { registerAction } from "@/lib/auth/actions";
 import { Logo } from "@/components/marketing/logo";
-import { Link } from "@/i18n/navigation";
+import { AuthLink } from "@/components/auth/auth-link";
 
 export default function RegisterPage() {
   return (
@@ -36,9 +36,9 @@ export default function RegisterPage() {
           </form>
           <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <AuthLink to="/login" className="text-primary hover:underline">
               Sign in
-            </Link>
+            </AuthLink>
           </p>
         </CardContent>
       </Card>

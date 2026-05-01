@@ -15,19 +15,33 @@ datasource db {
 // =============================================================================
 
 model User {
-  id            String       @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String       @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
   passwordHash  String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   accounts    Account[]
   sessions    Session[]
   memberships Membership[]
-  invites     OrgInvite[] @relation("invitedBy")
+  invites     OrgInvite[]   @relation("invitedBy")
+  settings    UserSettings?
+}
+
+model UserSettings {
+  userId            String   @id @map("user_id")
+  timezone          String?
+  dateFormat        String?  @map("date_format")
+  currencyFormat    String?  @map("currency_format")
+  notificationsJson Json     @default("{}") @map("notifications_json")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }
 
 model Account {
@@ -75,13 +89,13 @@ enum Role {
 }
 
 model Organization {
-  id               String        @id @default(cuid())
+  id               String   @id @default(cuid())
   name             String
-  slug             String        @unique
-  planId           String        @default("free")
-  stripeCustomerId String?       @unique
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  slug             String   @unique
+  planId           String   @default("free")
+  stripeCustomerId String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   memberships  Membership[]
   resources    Resource[]
@@ -90,11 +104,11 @@ model Organization {
 }
 
 model Membership {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   userId         String
   organizationId String
-  role           Role         @default(MANAGER)
-  createdAt      DateTime     @default(now())
+  role           Role     @default(MANAGER)
+  createdAt      DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -103,15 +117,15 @@ model Membership {
 }
 
 model OrgInvite {
-  id             String       @id @default(cuid())
+  id             String    @id @default(cuid())
   organizationId String
   email          String
-  role           Role         @default(MANAGER)
-  token          String       @unique
+  role           Role      @default(MANAGER)
+  token          String    @unique
   invitedById    String
   expiresAt      DateTime
   acceptedAt     DateTime?
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime  @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   invitedBy    User         @relation("invitedBy", fields: [invitedById], references: [id])
@@ -151,24 +165,24 @@ model Subscription {
 // =============================================================================
 
 model Resource {
-  id              String   @id @default(cuid())
-  organizationId  String
-  slug            String   @unique
-  name            String
-  description     String?
-  logoUrl         String?
-  contactEmail    String?
-  contactPhone    String?
-  contactAddress  String?
-  socialJson      Json?
-  templateId      String   @default("classic")
-  themeJson       Json?
-  enabledLocales  String[] @default(["en"])
+  id                String   @id @default(cuid())
+  organizationId    String
+  slug              String   @unique
+  name              String
+  description       String?
+  logoUrl           String?
+  contactEmail      String?
+  contactPhone      String?
+  contactAddress    String?
+  socialJson        Json?
+  templateId        String   @default("classic")
+  themeJson         Json?
+  enabledLocales    String[] @default(["en"])
   enabledCurrencies String[] @default(["EUR"])
-  defaultLocale   String   @default("en")
-  defaultCurrency String   @default("EUR")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  defaultLocale     String   @default("en")
+  defaultCurrency   String   @default("EUR")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   menus        Menu[]
@@ -183,13 +197,13 @@ model Resource {
 // =============================================================================
 
 model Menu {
-  id         String     @id @default(cuid())
+  id         String   @id @default(cuid())
   resourceId String
   name       String
-  position   Int        @default(0)
-  isActive   Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  position   Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   resource   Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   categories Category[]
@@ -198,14 +212,14 @@ model Menu {
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  menuId    String
-  name      String
+  id          String   @id @default(cuid())
+  menuId      String
+  name        String
   description String?
-  position  Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  position    Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   menu  Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade)
   items Item[]
@@ -214,25 +228,26 @@ model Category {
 }
 
 model Item {
-  id          String   @id @default(cuid())
-  categoryId  String
-  name        String
-  description String?
-  position    Int      @default(0)
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
-  isVegan     Boolean  @default(false)
-  isVegetarian Boolean @default(false)
-  isGlutenFree Boolean @default(false)
-  isSpicy     Boolean  @default(false)
-  calories    Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  categoryId   String
+  name         String
+  description  String?
+  position     Int      @default(0)
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  isVegan      Boolean  @default(false)
+  isVegetarian Boolean  @default(false)
+  isGlutenFree Boolean  @default(false)
+  isSpicy      Boolean  @default(false)
+  calories     Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  prices     ItemPrice[]
-  images     ItemImage[]
-  allergens  ItemAllergen[]
+  category  Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  prices    ItemPrice[]
+  images    ItemImage[]
+  allergens ItemAllergen[]
+  events    AnalyticsEvent[]
 
   @@index([categoryId])
 }
@@ -265,10 +280,10 @@ model ItemImage {
 }
 
 model Allergen {
-  id    String @id @default(cuid())
-  code  String @unique
-  name  String
-  icon  String?
+  id   String  @id @default(cuid())
+  code String  @unique
+  name String
+  icon String?
 
   items ItemAllergen[]
 }
@@ -292,6 +307,11 @@ enum TranslationSource {
   MANUAL
 }
 
+enum TranslationStatus {
+  DRAFT
+  APPROVED
+}
+
 enum TranslationEntity {
   RESOURCE
   MENU
@@ -308,6 +328,9 @@ model Translation {
   field      String
   value      String            @db.Text
   source     TranslationSource @default(AI)
+  status     TranslationStatus @default(DRAFT)
+  sourceHash String?
+  approvedAt DateTime?
   updatedAt  DateTime          @updatedAt
 
   @@unique([entityType, entityId, locale, field])
@@ -358,12 +381,16 @@ model QrDesign {
 enum AnalyticsType {
   SCAN
   VIEW
+  ITEM_VIEW
+  ITEM_CLICK
 }
 
 model AnalyticsEvent {
   id          String        @id @default(cuid())
   resourceId  String
+  itemId      String?
   type        AnalyticsType
+  metadataJson Json?
   locale      String?
   device      String?
   isReturning Boolean       @default(false)
@@ -371,26 +398,28 @@ model AnalyticsEvent {
   ts          DateTime      @default(now())
 
   resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  item     Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
 
   @@index([resourceId, ts])
   @@index([resourceId, type, ts])
+  @@index([resourceId, itemId, ts])
 }
 
 model NewsletterSubscriber {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  locale     String?  @default("en")
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  email     String   @unique
+  locale    String?  @default("en")
+  createdAt DateTime @default(now())
 }
 
 model WebhookReceipt {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   provider    String
   eventId     String
   eventType   String
-  receivedAt  DateTime @default(now())
+  receivedAt  DateTime  @default(now())
   processedAt DateTime?
-  status      String   @default("RECEIVED")
+  status      String    @default("RECEIVED")
   error       String?
 
   @@unique([provider, eventId])

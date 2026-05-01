@@ -30,16 +30,22 @@ export interface HostInfo {
 
 export function parseHost(rawHost: string | undefined | null): HostInfo {
   const host = (rawHost ?? "").split(":")[0].toLowerCase();
-  const root = (process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "menuly.test").toLowerCase();
+  const roots = (process.env.NEXT_PUBLIC_ROOT_DOMAINS ??
+    process.env.NEXT_PUBLIC_ROOT_DOMAIN ??
+    "menuly.test")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
 
   if (!host) return { host: "", subdomain: "", isApp: false, tenantSlug: null };
 
   // Strip ROOT_DOMAIN suffix if present
   let sub = "";
-  if (host === root || host === `www.${root}`) {
+  const matchedRoot = roots.find((root) => host === root || host === `www.${root}` || host.endsWith(`.${root}`));
+  if (matchedRoot && (host === matchedRoot || host === `www.${matchedRoot}`)) {
     sub = "";
-  } else if (host.endsWith(`.${root}`)) {
-    sub = host.slice(0, -1 - root.length);
+  } else if (matchedRoot && host.endsWith(`.${matchedRoot}`)) {
+    sub = host.slice(0, -1 - matchedRoot.length);
   } else if (host.endsWith(".localhost")) {
     sub = host.slice(0, -".localhost".length);
   } else if (host === "localhost") {

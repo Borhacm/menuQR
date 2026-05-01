@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { SOLUTIONS } from "@/content/solutions";
@@ -33,16 +33,16 @@ export default async function SolutionsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("SolutionsPage");
 
   return (
     <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
-          Everything you need to ship a digital menu
+          {t("title")}
         </h1>
         <p className="mt-5 text-muted-foreground">
-          Eight focused features that work together to power thousands of restaurant
-          menus around the world.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -57,9 +57,9 @@ export default async function SolutionsPage({
                     <Icon className="h-5 w-5" />
                   </div>
                   <h2 className="mt-4 font-display text-base font-semibold">
-                    {s.title}
+                    {t(`items.${s.iconKey}.title`)}
                   </h2>
-                  <p className="mt-2 text-sm text-muted-foreground">{s.hero}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{t(`items.${s.iconKey}.hero`)}</p>
                 </CardContent>
               </Card>
             </Link>

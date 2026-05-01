@@ -10,41 +10,32 @@ export function Trust() {
 
   return (
     <section className="container mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <div>
+      <div className="mx-auto max-w-5xl">
+        <div className="text-center">
           <p className="text-sm font-medium uppercase tracking-wider text-primary">
             {t("eyebrow")}
           </p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {t("title")}
           </h2>
-          <p className="mt-5 text-muted-foreground">{t("intro")}</p>
-
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            <Stat label="Restaurants" value="1,200+" />
-            <Stat label="Languages" value="25+" />
-            <Stat label="Countries" value="40+" />
-            <Stat label="Uptime" value="99.99%" />
-          </div>
+          <p className="mx-auto mt-5 max-w-3xl text-muted-foreground">{t("intro")}</p>
         </div>
 
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ul className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-2">
           {items.map((item, i) => (
             <motion.li
               key={item.title}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="rounded-xl border border-border bg-card p-5"
+              transition={{ duration: 0.35, delay: i * 0.04 }}
+              className="group rounded-xl border border-border/70 bg-card/70 p-5 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card"
             >
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform group-hover:scale-105" />
                 <div>
-                  <h3 className="font-display text-sm font-semibold">{item.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
+                  <h3 className="font-display text-base font-semibold leading-tight">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
                 </div>
               </div>
             </motion.li>
@@ -52,16 +43,5 @@ export function Trust() {
         </ul>
       </div>
     </section>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 text-center">
-      <div className="font-display text-2xl font-bold">{value}</div>
-      <div className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
-    </div>
   );
 }

@@ -25,7 +25,7 @@ export function Newsletter() {
       toast.success(t("success"));
       setEmail("");
     } catch {
-      toast.error("Something went wrong");
+      toast.error(t("error"));
     } finally {
       setPending(false);
     }
@@ -40,7 +40,7 @@ export function Newsletter() {
         <h2 className="font-display text-2xl font-semibold sm:text-3xl">
           {t("title")}
         </h2>
-        <form onSubmit={onSubmit} className="flex w-full max-w-md gap-2">
+        <form onSubmit={onSubmit} className="flex w-full max-w-md flex-col gap-2 sm:flex-row">
           <Input
             type="email"
             required
@@ -48,7 +48,7 @@ export function Newsletter() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} className="sm:w-auto">
             {t("cta")}
           </Button>
         </form>

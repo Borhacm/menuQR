@@ -1,8 +1,9 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { SOLUTIONS } from "@/content/solutions";
 import { Button } from "@/components/ui/button";
+import { AuthLink } from "@/components/auth/auth-link";
 import {
   Globe,
   Settings2,
@@ -27,6 +28,30 @@ const ICONS = {
   qr: QrCode,
 };
 
+const TEMPLATE_PREVIEWS = [
+  {
+    id: "classic",
+    name: "Classic",
+    category: "Entrantes",
+    dish: "Burrata con pesto",
+    price: "€12.50",
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    category: "Pasta",
+    dish: "Tagliatelle al ragú",
+    price: "€14.50",
+  },
+  {
+    id: "grid",
+    name: "Grid",
+    category: "Pizza",
+    dish: "Pizza Trufa",
+    price: "€15.90",
+  },
+] as const;
+
 export function generateStaticParams() {
   return SOLUTIONS.map((s) => ({ slug: s.slug }));
 }
@@ -38,6 +63,7 @@ export default async function SolutionDetailPage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("SolutionDetailPage");
 
   const sol = SOLUTIONS.find((s) => s.slug === slug);
   if (!sol) notFound();
@@ -52,49 +78,56 @@ export default async function SolutionDetailPage({
             <Icon className="h-6 w-6" />
           </div>
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            {sol.title}
+            {t(`items.${sol.iconKey}.title`)}
           </h1>
-          <p className="mt-5 text-lg text-muted-foreground">{sol.hero}</p>
+          <p className="mt-5 text-lg text-muted-foreground">{t(`items.${sol.iconKey}.hero`)}</p>
         </div>
       </section>
 
       <section className="container mx-auto grid grid-cols-1 gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8">
         <div>
           <p className="text-base text-muted-foreground leading-relaxed">
-            {sol.description}
+            {t(`items.${sol.iconKey}.description`)}
           </p>
           <ul className="mt-7 space-y-3">
-            {sol.bullets.map((b) => (
-              <li key={b} className="flex items-start gap-2.5">
+            {sol.bullets.map((_, index) => (
+              <li key={`${sol.slug}-${index}`} className="flex items-start gap-2.5">
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                <span className="text-sm">{b}</span>
+                <span className="text-sm">{t(`items.${sol.iconKey}.bullets.${index}`)}</span>
               </li>
             ))}
           </ul>
 
           <div className="mt-8 flex items-center gap-3">
             <Button asChild>
-              <Link href="/register">
-                Start free <ArrowRight className="h-4 w-4" />
-              </Link>
+              <AuthLink to="/register">
+                {t("ctaPrimary")} <ArrowRight className="h-4 w-4" />
+              </AuthLink>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/pricing">See pricing</Link>
+              <Link href="/pricing">{t("ctaSecondary")}</Link>
             </Button>
           </div>
         </div>
 
-        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900">
-          <div className="absolute inset-6 grid grid-cols-2 gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="rounded-lg bg-background/80 p-4 backdrop-blur shadow-sm"
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 p-4 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900">
+          <div className="grid h-full grid-cols-1 gap-3 sm:grid-cols-3">
+            {TEMPLATE_PREVIEWS.map((preview) => (
+              <Link
+                key={preview.name}
+                href={`/preview/templates/${preview.id}`}
+                className="group overflow-hidden rounded-lg border border-border/70 bg-background/85 backdrop-blur shadow-[0_10px_20px_hsl(0_0%_0%/0.35)] transition-colors hover:border-primary/60"
               >
-                <div className="h-2 w-1/2 rounded-full bg-muted" />
-                <div className="mt-2 h-2 w-3/4 rounded-full bg-muted" />
-                <div className="mt-2 h-2 w-2/3 rounded-full bg-muted" />
-              </div>
+                <div className="h-full bg-gradient-to-b from-zinc-900 to-zinc-950 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">{preview.category}</p>
+                  <p className="mt-1 text-sm font-semibold text-zinc-100">{preview.dish}</p>
+                  <p className="mt-1 text-xs text-zinc-400">Pasta artesanal cocinada a fuego lento</p>
+                  <p className="mt-2 text-sm font-bold text-primary">{preview.price}</p>
+                  <div className="mt-3 rounded-md border border-zinc-700 bg-zinc-900/70 px-2 py-1 text-[11px] font-semibold text-zinc-300 group-hover:text-zinc-100">
+                    Ver demo {preview.name}
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

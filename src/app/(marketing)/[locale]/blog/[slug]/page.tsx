@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { POSTS } from "@/content/blog";
 
@@ -13,6 +13,7 @@ export default async function BlogPostPage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("BlogPage");
 
   const post = POSTS.find((p) => p.slug === slug);
   if (!post) notFound();
@@ -24,11 +25,11 @@ export default async function BlogPostPage({
         {new Date(post.date).toLocaleDateString(locale)}
       </div>
       <h1 className="mt-2 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-        {post.title}
+        {t(`posts.${post.slug}.title`)}
       </h1>
-      <p className="mt-4 text-lg text-muted-foreground">{post.excerpt}</p>
+      <p className="mt-4 text-lg text-muted-foreground">{t(`posts.${post.slug}.excerpt`)}</p>
       <div className="prose prose-zinc dark:prose-invert mt-10">
-        <p>{post.body}</p>
+        <p>{t(`posts.${post.slug}.body`)}</p>
       </div>
     </article>
   );
