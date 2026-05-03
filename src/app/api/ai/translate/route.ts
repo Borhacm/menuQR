@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { openai } from "@/lib/ai/client";
+import { getOpenAI } from "@/lib/ai/client";
 import { appHref } from "@/lib/routes";
 import { resolveTenantMembership } from "@/lib/auth/tenant";
 import { getPlan } from "@/config/plans";
@@ -149,7 +149,7 @@ async function translateWithOpenAI(text: string, locale: string) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.2,
     messages: [

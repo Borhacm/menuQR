@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { openai } from "@/lib/ai/client";
+import { getOpenAI } from "@/lib/ai/client";
 import { auth } from "@/auth";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 import { logEvent, metricIncr } from "@/lib/observability";
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   const b64 = Buffer.from(bytes).toString("base64");
   const mime = image.type || "image/jpeg";
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o",
     messages: [
       {
