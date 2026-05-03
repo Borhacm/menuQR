@@ -69,7 +69,9 @@ export async function renderPublicMenuPage({
   }
   const qs = await searchParams;
 
-  const resource = await db.resource.findUnique({
+  let resource;
+  try {
+    resource = await db.resource.findUnique({
     where: { slug },
     include: {
       organization: {
@@ -99,6 +101,10 @@ export async function renderPublicMenuPage({
       },
     },
   });
+  } catch (error) {
+    console.error("[public-menu] prisma findUnique failed", { slug, message: String(error) });
+    throw error;
+  }
 
   if (!resource) notFound();
 
