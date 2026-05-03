@@ -1,0 +1,5 @@
+# Never upload local env to Vercel (CLI deploy); Prisma migrate + build must use dashboard env vars.
+.env
+.env.local
+.env.development
+.env.test

@@ -5,7 +5,8 @@ import path from "node:path";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: path.join(__dirname, ".."),
+  // Hay otro package-lock más arriba en el disco de algunos desarrolladores; fuerza esta app como raíz de trazado.
+  outputFileTracingRoot: path.join(__dirname),
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
@@ -15,6 +16,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.pexels.com" },
       { protocol: "https", hostname: "cdn.pixabay.com" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
     ],
   },
   experimental: {

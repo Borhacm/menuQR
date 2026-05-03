@@ -2,14 +2,18 @@
  * Subdomain helpers.
  *
  * Routing rules (handled by middleware):
- *   - host = ROOT_DOMAIN or www.ROOT_DOMAIN  -> marketing site
- *   - host = app.ROOT_DOMAIN                 -> admin app (/app/*)
- *   - host = <slug>.ROOT_DOMAIN              -> public menu (/_menu/<slug>)
+ *   - host = apex or www.<root>                         -> marketing (or skip tenant rewrite)
+ *   - host = app.<root>                                 -> admin app (/app/*)
+ *   - host = <tenant>.<root> (tenant not reserved)      -> public menu (/_menu/<tenant>)
+ *
+ * **Multiple roots**: set `NEXT_PUBLIC_ROOT_DOMAINS` (comma-separated). When several roots match,
+ * the **longest** one wins — e.g. `menuly.bocal.online` over `bocal.online` so that host
+ * `menuly.bocal.online` is apex (tenant slug unset) instead of falsely mapping to tenant `menuly`.
  *
  * In development we treat *.localhost the same way, e.g.
  *   - localhost:3000              -> marketing
  *   - app.localhost:3000          -> admin
- *   - acme.localhost:3000         -> public menu (slug=acme)
+ *   - acme.localhost:3000        -> public menu (slug=acme)
  *
  * If wildcard DNS is not available, the public menu is also reachable via the
  * fallback path /m/<slug>.
@@ -28,6 +32,17 @@ export interface HostInfo {
   tenantSlug: string | null;
 }
 
+/** Among configured roots that match `host`, return the longest (most specific) label. */
+function longestMatchingRoot(host: string, roots: readonly string[]): string | undefined {
+  const dot = "." as const;
+  const candidates = roots.filter(
+    (root) =>
+      root.length > 0 && (host === root || host === `www.${root}` || host.endsWith(`${dot}${root}`))
+  );
+  if (!candidates.length) return undefined;
+  return candidates.reduce((best, root) => (root.length > best.length ? root : best));
+}
+
 export function parseHost(rawHost: string | undefined | null): HostInfo {
   const host = (rawHost ?? "").split(":")[0].toLowerCase();
   const roots = (process.env.NEXT_PUBLIC_ROOT_DOMAINS ??
@@ -39,9 +54,9 @@ export function parseHost(rawHost: string | undefined | null): HostInfo {
 
   if (!host) return { host: "", subdomain: "", isApp: false, tenantSlug: null };
 
-  // Strip ROOT_DOMAIN suffix if present
   let sub = "";
-  const matchedRoot = roots.find((root) => host === root || host === `www.${root}` || host.endsWith(`.${root}`));
+  const matchedRoot = longestMatchingRoot(host, roots);
+
   if (matchedRoot && (host === matchedRoot || host === `www.${matchedRoot}`)) {
     sub = "";
   } else if (matchedRoot && host.endsWith(`.${matchedRoot}`)) {
@@ -51,7 +66,6 @@ export function parseHost(rawHost: string | undefined | null): HostInfo {
   } else if (host === "localhost") {
     sub = "";
   } else {
-    // Unknown host – assume root
     sub = "";
   }
 

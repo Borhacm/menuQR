@@ -4,54 +4,11 @@ import { setRequestLocale } from "next-intl/server";
 import { ClassicTemplate } from "@/components/menu-templates/classic";
 import { ModernTemplate } from "@/components/menu-templates/modern";
 import { GridTemplate } from "@/components/menu-templates/grid";
-import type { MenuCategory } from "@/components/menu-templates/types";
+import { getMarketingTemplateDemoCategories } from "@/lib/marketing/template-demo-categories";
 
 type TemplateKey = "classic" | "modern" | "grid";
 
-const DEMO_CATEGORIES: MenuCategory[] = [
-  {
-    id: "starters",
-    name: "Entrantes",
-    description: "Para abrir el apetito",
-    items: [
-      {
-        id: "item-1",
-        name: "Burrata con pesto",
-        description: "Tomate cherry, albahaca fresca y aceite de oliva",
-        isFeatured: true,
-        prices: [{ id: "p-1", amount: 12.5, currency: "EUR" }],
-      },
-      {
-        id: "item-2",
-        name: "Croquetas ibéricas",
-        description: "Cremosas y crujientes",
-        isFeatured: false,
-        prices: [{ id: "p-2", amount: 8.5, currency: "EUR" }],
-      },
-    ],
-  },
-  {
-    id: "mains",
-    name: "Principales",
-    description: "Nuestros favoritos de la casa",
-    items: [
-      {
-        id: "item-3",
-        name: "Tagliatelle al ragú",
-        description: "Pasta artesanal cocinada a fuego lento",
-        isFeatured: true,
-        prices: [{ id: "p-3", amount: 14.5, currency: "EUR" }],
-      },
-      {
-        id: "item-4",
-        name: "Pizza Trufa",
-        description: "Mozzarella fior di latte, setas y trufa",
-        isFeatured: false,
-        prices: [{ id: "p-4", amount: 15.9, currency: "EUR" }],
-      },
-    ],
-  },
-];
+const DEMO_CATEGORIES = getMarketingTemplateDemoCategories();
 
 function isTemplate(value: string): value is TemplateKey {
   return value === "classic" || value === "modern" || value === "grid";
@@ -87,57 +44,26 @@ export default async function TemplatePreviewPage({
       {template === "modern" ? (
         <ModernTemplate
           title="La Trattoria"
-          categories={DEMO_CATEGORIES.map((category) => ({
-            ...category,
-            items: category.items.map((item): MenuCategory["items"][number] => ({
-              ...item,
-              isVegan: item.isVegan ?? false,
-              isVegetarian: item.isVegetarian ?? false,
-              isGlutenFree: item.isGlutenFree ?? false,
-              isSpicy: item.isSpicy ?? false,
-              images: item.images ?? [],
-              allergens: item.allergens ?? [],
-              prices: item.prices.map((price) => ({ ...price })),
-            })),
-          }))}
+          categories={DEMO_CATEGORIES}
           locale="es"
           locales={["es", "en"]}
         />
       ) : template === "grid" ? (
         <GridTemplate
           title="La Trattoria"
-          categories={DEMO_CATEGORIES.map((category) => ({
-            ...category,
-            items: category.items.map((item): MenuCategory["items"][number] => ({
-              ...item,
-              isVegan: item.isVegan ?? false,
-              isVegetarian: item.isVegetarian ?? false,
-              isGlutenFree: item.isGlutenFree ?? false,
-              isSpicy: item.isSpicy ?? false,
-              images: item.images ?? [],
-              allergens: item.allergens ?? [],
-              prices: item.prices.map((price) => ({ ...price })),
-            })),
-          }))}
+          categories={DEMO_CATEGORIES}
           locale="es"
+          locales={["es", "en"]}
+          canShowAllergens
         />
       ) : (
         <ClassicTemplate
           title="La Trattoria"
-          categories={DEMO_CATEGORIES.map((category) => ({
-            ...category,
-            items: category.items.map((item): MenuCategory["items"][number] => ({
-              ...item,
-              isVegan: item.isVegan ?? false,
-              isVegetarian: item.isVegetarian ?? false,
-              isGlutenFree: item.isGlutenFree ?? false,
-              isSpicy: item.isSpicy ?? false,
-              images: item.images ?? [],
-              allergens: item.allergens ?? [],
-              prices: item.prices.map((price) => ({ ...price })),
-            })),
-          }))}
+          categories={DEMO_CATEGORIES}
           locale="es"
+          locales={["es", "en"]}
+          canShowAllergens
+          initialCurrency="EUR"
         />
       )}
     </main>

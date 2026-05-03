@@ -51,6 +51,16 @@ function isPrismaUnknownStatusFieldError(error: unknown) {
   );
 }
 
+function isLegacyMainCategoryName(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return normalized === "main" || normalized === "principal";
+}
+
+function isDefaultPriceLabel(label: string | null) {
+  const normalized = (label ?? "").trim().toLowerCase();
+  return !normalized || normalized === "default" || normalized === "regular";
+}
+
 export async function updateResourceAction(formData: FormData) {
   const ctx = await requireTenantContext();
   const successPath = appHref("settings", { saved: "resource" });
@@ -394,7 +404,6 @@ export async function createItemAction(formData: FormData) {
       isFeatured: String(formData.get("isFeatured") ?? "") === "on",
       isVegan: String(formData.get("isVegan") ?? "") === "on",
       isVegetarian: String(formData.get("isVegetarian") ?? "") === "on",
-      isGlutenFree: String(formData.get("isGlutenFree") ?? "") === "on",
       isSpicy: String(formData.get("isSpicy") ?? "") === "on",
     },
   });
@@ -542,10 +551,84 @@ export async function updateItemAction(formData: FormData) {
     });
   } catch (error) {
     console.error("[updateItemAction] failed:", error);
-    redirect(errorPath);
+    redirect(`${errorPath}#item-${encodeURIComponent(itemId)}`);
   }
   revalidatePath(appRoutes.items);
-  redirect(successPath);
+  redirect(`${successPath}#item-${encodeURIComponent(itemId)}`);
+}
+
+function itemsProductsScrollHref(itemId: string, query: Record<string, string | number>) {
+  return `${appHref("items", query)}#item-${encodeURIComponent(itemId)}`;
+}
+
+export async function deleteItemImageAction(formData: FormData) {
+  const ctx = await requireTenantContext();
+  if (!ctx.resource) return;
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const imageId = String(formData.get("imageId") ?? "").trim();
+  if (!itemId || !imageId) return;
+
+  const ownedItem = await db.item.findFirst({
+    where: { id: itemId, category: { menu: { resourceId: ctx.resource.id } } },
+    select: { id: true },
+  });
+  if (!ownedItem) return;
+
+  const image = await db.itemImage.findFirst({
+    where: { id: imageId, itemId: ownedItem.id },
+    select: { id: true },
+  });
+  if (!image) return;
+
+  await db.itemImage.delete({ where: { id: image.id } });
+  revalidatePath(appRoutes.items);
+  redirect(itemsProductsScrollHref(ownedItem.id, { tab: "products", editItemId: ownedItem.id }));
+}
+
+export async function appendItemImageAction(formData: FormData) {
+  const ctx = await requireTenantContext();
+  if (!ctx.resource) return;
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const url = String(formData.get("imageUrl") ?? "").trim();
+  if (!itemId || !url) return;
+
+  const ownedItem = await db.item.findFirst({
+    where: { id: itemId, category: { menu: { resourceId: ctx.resource.id } } },
+    select: { id: true, name: true },
+  });
+  if (!ownedItem) return;
+
+  const photoCount = await db.itemImage.count({
+    where: { itemId: ownedItem.id },
+  });
+  if (photoCount >= 5) {
+    redirect(itemsProductsScrollHref(ownedItem.id, { tab: "products", editItemId: ownedItem.id }));
+  }
+
+  const last = await db.itemImage.findFirst({
+    where: { itemId: ownedItem.id },
+    orderBy: { position: "desc" },
+    select: { position: true },
+  });
+  const position = (last?.position ?? -1) + 1;
+
+  await db.itemImage.create({
+    data: {
+      itemId: ownedItem.id,
+      url,
+      alt: itemPhotoAltText(ownedItem.name),
+      position,
+    },
+  });
+  revalidatePath(appRoutes.items);
+  redirect(itemsProductsScrollHref(ownedItem.id, { tab: "products", editItemId: ownedItem.id }));
+}
+
+function itemPhotoAltText(dishName: string) {
+  const name = dishName.trim() || "dish";
+  return `Foto del plato ${name}`;
 }
 
 export async function deleteItemAction(formData: FormData) {
@@ -620,7 +703,7 @@ export async function saveQrDesignAction(formData: FormData) {
     });
   }
 
-  revalidatePath(appRoutes.qr);
+  revalidatePath(appRoutes.items);
 }
 
 export async function renameQrDesignAction(formData: FormData) {
@@ -641,7 +724,7 @@ export async function renameQrDesignAction(formData: FormData) {
     where: { id: design.id },
     data: { name },
   });
-  revalidatePath(appRoutes.qr);
+  revalidatePath(appRoutes.items);
 }
 
 export async function deleteQrDesignAction(formData: FormData) {
@@ -660,7 +743,7 @@ export async function deleteQrDesignAction(formData: FormData) {
   await db.qrDesign.delete({
     where: { id: design.id },
   });
-  revalidatePath(appRoutes.qr);
+  revalidatePath(appRoutes.items);
 }
 
 export async function inviteManagerAction(formData: FormData) {
@@ -849,7 +932,7 @@ export async function updateTemplateAction(formData: FormData) {
     where: { id: ctx.resource.id },
     data: { templateId },
   });
-  revalidatePath(appRoutes.templates);
+  revalidatePath(appRoutes.items);
   revalidatePath(`/m/${ctx.resource.slug}`);
 }
 
@@ -872,9 +955,9 @@ export async function updateTemplateStylesAction(formData: FormData) {
     },
   });
 
-  revalidatePath(appRoutes.templates);
+  revalidatePath(appRoutes.items);
   revalidatePath(`/m/${ctx.resource.slug}`);
-  redirect(`${appRoutes.templates}?saved=styles`);
+  redirect(`${appRoutes.items}?tab=style-editor&saved=styles`);
 }
 
 export async function saveTranslationOverrideAction(formData: FormData) {
@@ -1011,5 +1094,123 @@ export async function markTranslationDraftAction(formData: FormData) {
     }
   }
 
+  revalidatePath(appRoutes.translations);
+}
+
+export async function acceptAllTranslationsAction(formData: FormData) {
+  const ctx = await requireTenantContext();
+  if (!ctx.resource) return;
+
+  const locale = String(formData.get("locale") ?? "").trim().toLowerCase();
+  if (!locale) return;
+
+  const resource = await db.resource.findUnique({
+    where: { id: ctx.resource.id },
+    include: {
+      menus: {
+        include: {
+          categories: {
+            include: {
+              items: {
+                include: {
+                  prices: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!resource) return;
+
+  const now = new Date();
+  const candidates: Array<{
+    entityType: "RESOURCE" | "CATEGORY" | "ITEM" | "ITEM_PRICE";
+    entityId: string;
+    field: string;
+    value: string;
+    sourceHash: string;
+  }> = [
+    {
+      entityType: "RESOURCE",
+      entityId: resource.id,
+      field: "name",
+      value: resource.name,
+      sourceHash: createHash("sha256").update(resource.name.trim()).digest("hex"),
+    },
+  ];
+
+  for (const menu of resource.menus) {
+    for (const category of menu.categories) {
+      if (isLegacyMainCategoryName(category.name)) continue;
+      candidates.push({
+        entityType: "CATEGORY",
+        entityId: category.id,
+        field: "name",
+        value: category.name,
+        sourceHash: createHash("sha256").update(category.name.trim()).digest("hex"),
+      });
+      for (const item of category.items) {
+        candidates.push({
+          entityType: "ITEM",
+          entityId: item.id,
+          field: "name",
+          value: item.name,
+          sourceHash: createHash("sha256").update(item.name.trim()).digest("hex"),
+        });
+        if ((item.description ?? "").trim()) {
+          candidates.push({
+            entityType: "ITEM",
+            entityId: item.id,
+            field: "description",
+            value: item.description ?? "",
+            sourceHash: createHash("sha256").update((item.description ?? "").trim()).digest("hex"),
+          });
+        }
+        for (const price of item.prices) {
+          if (isDefaultPriceLabel(price.label)) continue;
+          candidates.push({
+            entityType: "ITEM_PRICE",
+            entityId: price.id,
+            field: "label",
+            value: price.label ?? "",
+            sourceHash: createHash("sha256").update((price.label ?? "").trim()).digest("hex"),
+          });
+        }
+      }
+    }
+  }
+
+  for (const candidate of candidates) {
+    await db.translation.upsert({
+      where: {
+        entityType_entityId_locale_field: {
+          entityType: candidate.entityType,
+          entityId: candidate.entityId,
+          locale,
+          field: candidate.field,
+        },
+      },
+      update: {
+        status: "APPROVED",
+        source: "MANUAL",
+        approvedAt: now,
+      },
+      create: {
+        entityType: candidate.entityType,
+        entityId: candidate.entityId,
+        locale,
+        field: candidate.field,
+        value: candidate.value,
+        source: "MANUAL",
+        status: "APPROVED",
+        sourceHash: candidate.sourceHash,
+        approvedAt: now,
+      },
+    });
+  }
+
+  revalidatePath(appRoutes.items);
   revalidatePath(appRoutes.translations);
 }

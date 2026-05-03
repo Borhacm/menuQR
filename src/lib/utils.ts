@@ -15,8 +15,24 @@ export function slugify(input: string): string {
     .slice(0, 60);
 }
 
+/** Default when env is unset; avoid invalid URLs that break `metadataBase` (500 on every route). */
+const DEFAULT_SITE_URL = "http://localhost:3000";
+
+/** Absolute origin for URLs and metadataBase; falls back safely on empty or malformed env. */
+export function resolveAbsoluteSiteOrigin(): URL {
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim() ?? "";
+  if (!raw) return new URL(DEFAULT_SITE_URL);
+  try {
+    const parsed = new URL(raw);
+    // `metadataBase` must be an origin only; a path (e.g. …/es) can break OG/metadata URL resolution in Next.js.
+    return new URL(parsed.origin);
+  } catch {
+    return new URL(DEFAULT_SITE_URL);
+  }
+}
+
 export function absoluteUrl(path = "") {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = resolveAbsoluteSiteOrigin().origin;
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

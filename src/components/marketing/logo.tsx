@@ -1,7 +1,19 @@
 import { brand } from "@/config/brand";
+import { getMarketingSiteUrl } from "@/config/marketing-site-url";
 import { cn } from "@/lib/utils";
 
-export function Logo({ className }: { className?: string }) {
+type LogoProps = {
+  className?: string;
+  /**
+   * When false, the square mark is not wrapped in `<a>`.
+   * Use when the whole logo sits inside navigation (`<Link>`) to avoid invalid nested anchors.
+   */
+  linkMark?: boolean;
+};
+
+export function Logo({ className, linkMark = true }: LogoProps) {
+  const href = linkMark ? getMarketingSiteUrl() : null;
+
   return (
     <span
       className={cn(
@@ -9,7 +21,20 @@ export function Logo({ className }: { className?: string }) {
         className
       )}
     >
-      <LogoMark />
+      {href ? (
+        <a
+          href={href}
+          className={cn(
+            "inline-flex shrink-0 rounded-md outline-none ring-offset-background transition-opacity hover:opacity-90",
+            "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          )}
+          aria-label={`${brand.name} home`}
+        >
+          <LogoMark />
+        </a>
+      ) : (
+        <LogoMark />
+      )}
       <span>{brand.name}</span>
     </span>
   );

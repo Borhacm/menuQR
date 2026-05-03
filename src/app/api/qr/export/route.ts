@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateQrPdf, generateQrPngBuffer, generateQrSvg } from "@/lib/qr/generate";
+import { getMenuQrBaseUrl } from "@/lib/menu-qr-public-url";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
   if (!resource) {
     return NextResponse.json({ error: "Resource not found" }, { status: 404 });
   }
-  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/m/${resource.slug}`;
+  const url = `${getMenuQrBaseUrl()}/m/${resource.slug}`;
   const style = designId
     ? await db.qrDesign.findFirst({
         where: { id: designId, resourceId },

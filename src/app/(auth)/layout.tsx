@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="border-b border-border/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/">
-            <Logo />
+            <Logo linkMark={false} />
           </Link>
         </div>
       </header>

@@ -2,15 +2,13 @@ import { cookies, headers } from "next/headers";
 
 export type AdminLocale = "en" | "es";
 
-type AdminMessages = {
+export type AdminMessages = {
   nav: {
     dashboard: string;
     businessProfile: string;
     menus: string;
-    items: string;
-    templates: string;
+    menu: string;
     translations: string;
-    qr: string;
     analytics: string;
     billing: string;
     team: string;
@@ -60,6 +58,8 @@ type AdminMessages = {
     whatIsResource: string;
     name: string;
     slug: string;
+    canonicalPublicMenuLink: string;
+    canonicalPublicMenuLinkHint: string;
     defaultLocale: string;
     defaultCurrency: string;
     enabledLocales: string;
@@ -104,9 +104,16 @@ type AdminMessages = {
     featured: string;
     vegan: string;
     vegetarian: string;
-    glutenFree: string;
     spicy: string;
     empty: string;
+    photosTitle: string;
+    addPhoto: string;
+    maxPhotosReached: string;
+    deletePhotoAria: string;
+    deletePhotoConfirm: string;
+    morePhotosSuffix: string;
+    inventoryFilterAll: string;
+    inventoryNoItemsInCategory: string;
   };
   translations: {
     title: string;
@@ -124,6 +131,7 @@ type AdminMessages = {
     empty: string;
   };
   qr: {
+    tabLabel: string;
     title: string;
     designTitle: string;
     preview: string;
@@ -181,6 +189,10 @@ type AdminMessages = {
     mobilePreviewTab: string;
     mobilePreviewDescription: string;
     freePlanNotice: string;
+    baseStructureTitle: string;
+    presetsTitle: string;
+    visualDetailsTitle: string;
+    visualDetailsDescription: string;
     formatTitle: string;
     formatDescription: string;
     templateSuffix: string;
@@ -310,7 +322,6 @@ type AdminMessages = {
     spicy: string;
     vegan: string;
     vegetarian: string;
-    glutenFree: string;
     livePreview: string;
     imagePreviewPlaceholder: string;
     imagePreviewFailed: string;
@@ -341,10 +352,8 @@ const messages: Record<AdminLocale, AdminMessages> = {
       dashboard: "Dashboard",
       businessProfile: "Business profile",
       menus: "Categories",
-      items: "Products",
-      templates: "Styles",
+      menu: "Menu",
       translations: "Translations",
-      qr: "QR",
       analytics: "Analytics",
       billing: "Billing",
       team: "Team",
@@ -393,7 +402,10 @@ const messages: Record<AdminLocale, AdminMessages> = {
       brandDomain: "Profile",
       whatIsResource: "This section configures your public business page (name, URL, language, currency, and domains).",
       name: "Name",
-      slug: "Menu URL",
+      slug: "Menu slug",
+      canonicalPublicMenuLink: "Public menu link",
+      canonicalPublicMenuLinkHint:
+        "Shown in QR codes — always ends with /m/ and your slug. If the page fails to load, check this matches what you typed in the address bar.",
       defaultLocale: "Default locale",
       defaultCurrency: "Default currency",
       enabledLocales: "Enabled locales",
@@ -431,22 +443,29 @@ const messages: Record<AdminLocale, AdminMessages> = {
       save: "Save product",
       delete: "Delete product",
       deleteConfirm: "Are you sure you want to delete this product?",
-      currentTitle: "Current products",
+      currentTitle: "Inventory",
       optimizedImage: "Fast loading enabled",
       compatibleImage: "Compatible image (might load slower)",
       noPhoto: "This item has no photo. Adding one usually improves mobile conversion.",
       featured: "Chef recommendation",
       vegan: "Vegan",
       vegetarian: "Vegetarian",
-      glutenFree: "Gluten free",
       spicy: "Spicy",
       empty: "No products yet.",
+      photosTitle: "Photos",
+      addPhoto: "Add photo",
+      maxPhotosReached: "Maximum of 5 photos reached for this product.",
+      deletePhotoAria: "Delete photo",
+      deletePhotoConfirm: "Are you sure you want to delete this photo?",
+      morePhotosSuffix: "more",
+      inventoryFilterAll: "All",
+      inventoryNoItemsInCategory: "No products in this category.",
     },
     translations: {
       title: "Translations",
       aiQueueTitle: "Translate your menu",
       aiQueueDescription:
-        'Generate translations for your enabled languages. Review them in "Recent translations" and edit any text if needed.',
+        "Generate translations for your enabled languages. Review each locale, edit fields if needed, and use Accept all when everything is ready.",
       translateNow: "Generate translations now",
       recentTranslationsTitle: "Recent translations",
       fieldName: "Name",
@@ -459,6 +478,7 @@ const messages: Record<AdminLocale, AdminMessages> = {
       empty: "No translations yet. Generate your first batch to get started.",
     },
     qr: {
+      tabLabel: "QR",
       title: "QR Generator",
       designTitle: "Design your QR",
       preview: "Live preview",
@@ -512,11 +532,15 @@ const messages: Record<AdminLocale, AdminMessages> = {
     },
     templates: {
       title: "Styles",
-      styleEditorTab: "Style editor",
-      mobilePreviewTab: "Mobile live preview",
+      styleEditorTab: "Styles",
+      mobilePreviewTab: "Preview",
       mobilePreviewDescription:
         "Real mobile mockup with your current menu content as customers see it in the selected template.",
       freePlanNotice: "Free plan includes Classic template. Upgrade to Starter to unlock Modern and Grid.",
+      baseStructureTitle: "Base structure",
+      presetsTitle: "Presets",
+      visualDetailsTitle: "Visual details",
+      visualDetailsDescription: "Customize colors, typography and layout density to match your brand.",
       formatTitle: "Format",
       formatDescription: "Choose the base layout of your menu.",
       templateSuffix: "template",
@@ -670,7 +694,6 @@ const messages: Record<AdminLocale, AdminMessages> = {
       spicy: "Spicy",
       vegan: "Vegan",
       vegetarian: "Vegetarian",
-      glutenFree: "Gluten free",
       livePreview: "Live preview",
       imagePreviewPlaceholder: "Your photo will appear here",
       imagePreviewFailed: "We couldn't preview this URL. Use a direct image link or upload the file.",
@@ -701,10 +724,8 @@ const messages: Record<AdminLocale, AdminMessages> = {
       dashboard: "Panel",
       businessProfile: "Perfil del negocio",
       menus: "Categorías",
-      items: "Productos",
-      templates: "Estilos",
+      menu: "Menú",
       translations: "Traducciones",
-      qr: "QR",
       analytics: "Analíticas",
       billing: "Facturación",
       team: "Equipo",
@@ -753,7 +774,10 @@ const messages: Record<AdminLocale, AdminMessages> = {
       brandDomain: "Perfil",
       whatIsResource: "Esta sección configura tu ficha pública del negocio (nombre, URL, idioma, moneda y dominios).",
       name: "Nombre",
-      slug: "URL del menú",
+      slug: "Identificador del menú (slug)",
+      canonicalPublicMenuLink: "Enlace público del menú",
+      canonicalPublicMenuLinkHint:
+        "Es el que llevan los códigos QR: siempre /m/ y tu slug. Si no carga, comprueba que en el navegador coincida exactamente con este texto.",
       defaultLocale: "Idioma por defecto",
       defaultCurrency: "Moneda por defecto",
       enabledLocales: "Idiomas habilitados",
@@ -791,22 +815,29 @@ const messages: Record<AdminLocale, AdminMessages> = {
       save: "Guardar producto",
       delete: "Borrar producto",
       deleteConfirm: "¿Seguro que quieres borrar este producto?",
-      currentTitle: "Productos actuales",
+      currentTitle: "Inventario",
       optimizedImage: "Carga rápida activada",
       compatibleImage: "Imagen compatible (puede cargar más lento)",
       noPhoto: "Este ítem no tiene foto. Agregar una imagen suele mejorar la conversión en móviles.",
       featured: "Recomendación del chef",
       vegan: "Vegano",
       vegetarian: "Vegetariano",
-      glutenFree: "Sin gluten",
       spicy: "Picante",
       empty: "Aún no hay productos.",
+      photosTitle: "Fotos",
+      addPhoto: "Añadir foto",
+      maxPhotosReached: "Se alcanzó el máximo de 5 fotos para este producto.",
+      deletePhotoAria: "Eliminar foto",
+      deletePhotoConfirm: "¿Seguro que quieres eliminar esta foto?",
+      morePhotosSuffix: "más",
+      inventoryFilterAll: "Todo",
+      inventoryNoItemsInCategory: "No hay productos en esta categoría.",
     },
     translations: {
       title: "Traducciones",
       aiQueueTitle: "Traduce tu menú",
       aiQueueDescription:
-        'Genera traducciones para tus idiomas habilitados. Revísalas en "Traducciones recientes" y edita cualquier texto si hace falta.',
+        "Genera traducciones para tus idiomas habilitados. Revisa cada idioma, edita los campos si hace falta y usa Aceptar todo cuando esté listo.",
       translateNow: "Generar traducciones ahora",
       recentTranslationsTitle: "Traducciones recientes",
       fieldName: "Nombre",
@@ -819,6 +850,7 @@ const messages: Record<AdminLocale, AdminMessages> = {
       empty: "Aún no hay traducciones. Genera la primera tanda para empezar.",
     },
     qr: {
+      tabLabel: "QR",
       title: "Generador QR",
       designTitle: "Diseña tu QR",
       preview: "Vista previa en vivo",
@@ -872,11 +904,15 @@ const messages: Record<AdminLocale, AdminMessages> = {
     },
     templates: {
       title: "Estilos",
-      styleEditorTab: "Editor de estilos",
-      mobilePreviewTab: "Previsualización móvil real",
+      styleEditorTab: "Estilos",
+      mobilePreviewTab: "Previsualización",
       mobilePreviewDescription:
         "Mockup móvil real con el contenido actual de tu menú tal y como lo verá el cliente en la plantilla seleccionada.",
       freePlanNotice: "El plan Free incluye la plantilla Classic. Mejora a Starter para desbloquear Modern y Grid.",
+      baseStructureTitle: "Estructura base",
+      presetsTitle: "Presets",
+      visualDetailsTitle: "Detalles visuales",
+      visualDetailsDescription: "Personaliza colores, tipografía y densidad del diseño para adaptarlo a tu marca.",
       formatTitle: "Formato",
       formatDescription: "Elige la estructura base con la que se mostrará tu menú.",
       templateSuffix: "plantilla",
@@ -1030,7 +1066,6 @@ const messages: Record<AdminLocale, AdminMessages> = {
       spicy: "Picante",
       vegan: "Vegano",
       vegetarian: "Vegetariano",
-      glutenFree: "Sin gluten",
       livePreview: "Vista previa en vivo",
       imagePreviewPlaceholder: "Tu foto aparecerá aquí",
       imagePreviewFailed:

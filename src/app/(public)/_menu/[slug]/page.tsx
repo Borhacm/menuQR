@@ -65,6 +65,9 @@ export default async function PublicMenuPage({
   searchParams: Promise<{ locale?: string; currency?: string; template?: string }>;
 }) {
   const { slug } = await params;
+  if (typeof slug !== "string" || !slug.trim()) {
+    notFound();
+  }
   const qs = await searchParams;
 
   const resource = await db.resource.findUnique({
@@ -159,6 +162,8 @@ export default async function PublicMenuPage({
   const template = canUseTemplates(resource.organization.planId, 3)
     ? requestedOrDefault
     : "classic";
+  const resolvedInitialCurrency =
+    typeof qs.currency === "string" && qs.currency.trim() ? qs.currency.trim().toUpperCase() : resource.defaultCurrency;
   return (
     <main className="container mx-auto max-w-4xl px-4 py-6">
       <MenuTracker resourceId={resource.id} locale={locale} />
@@ -179,16 +184,32 @@ export default async function PublicMenuPage({
           locales={locales}
           theme={theme}
           canShowAllergens={canShowAllergens}
-          initialCurrency={qs.currency}
+          initialCurrency={resolvedInitialCurrency}
           analytics={{
             resourceId: resource.id,
             enableItemTracking: analyticsSettings.itemTrackingEnabled || enableItemAnalyticsTracking,
           }}
         />
       ) : template === "grid" ? (
-        <GridTemplate title={translatedTitle} categories={translatedCategories} locale={locale} theme={theme} />
+        <GridTemplate
+          title={translatedTitle}
+          categories={translatedCategories}
+          locale={locale}
+          locales={locales}
+          theme={theme}
+          canShowAllergens={canShowAllergens}
+          initialCurrency={resolvedInitialCurrency}
+        />
       ) : (
-        <ClassicTemplate title={translatedTitle} categories={translatedCategories} locale={locale} theme={theme} />
+        <ClassicTemplate
+          title={translatedTitle}
+          categories={translatedCategories}
+          locale={locale}
+          locales={locales}
+          theme={theme}
+          canShowAllergens={canShowAllergens}
+          initialCurrency={resolvedInitialCurrency}
+        />
       )}
     </main>
   );

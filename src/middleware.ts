@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
+import { locales } from "@/config/locales";
 import { parseHost } from "@/lib/subdomain";
 
 const intlMiddleware = createIntlMiddleware(routing);
+
+function isMarketingLocalePrefixedPath(pathname: string) {
+  return locales.some((loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`));
+}
 
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
@@ -17,7 +22,17 @@ export default function middleware(req: NextRequest) {
     url.pathname.startsWith("/uploads");
 
   // 1) Tenant menu via subdomain → rewrite to internal /_menu/<slug>
-  if (tenantSlug && !isSystemPath && !url.pathname.startsWith("/_menu/")) {
+  //
+  // Never rewrite path-based menus (/m/…) or locale-prefixed marketing routes (/es/, /en/…): if the
+  // menu host were misclassified as tenant (e.g. only ROOT_DOMAIN=bocal.online), rewriting would send
+  // /m/foo → /_menu/menuly/m/foo (404).
+  if (
+    tenantSlug &&
+    !isSystemPath &&
+    !url.pathname.startsWith("/_menu/") &&
+    !url.pathname.startsWith("/m/") &&
+    !isMarketingLocalePrefixedPath(url.pathname)
+  ) {
     const rewriteUrl = new URL(req.url);
     rewriteUrl.pathname = `/_menu/${tenantSlug}${url.pathname === "/" ? "" : url.pathname}`;
     return NextResponse.rewrite(rewriteUrl);

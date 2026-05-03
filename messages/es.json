@@ -71,7 +71,7 @@
       },
       "management": {
         "title": "Gestión de menú sencilla",
-        "description": "Añade, ordena y edita ítems con controles intuitivos. Nuestra IA construye tu menú a partir de imágenes."
+        "description": "Añade, ordena y edita ítems con controles intuitivos, desde un único flujo de menú pensado para el día a día en sala."
       },
       "analytics": {
         "title": "Analíticas de menú online",
@@ -87,7 +87,7 @@
       },
       "media": {
         "title": "Imágenes optimizadas",
-        "description": "Sube imágenes con validación segura y sírvelas optimizadas. En Pro puedes usar transformaciones CDN y variantes WebP."
+        "description": "Asocia fotos a cada plato desde el panel, con límites de tamaño razonables para que la carta se vea bien en móvil sin pesar de más."
       },
       "currency": {
         "title": "Menú multimoneda",
@@ -101,9 +101,9 @@
     "learnMore": "Ver más"
   },
   "Templates": {
-    "eyebrow": "Panel en vivo",
+    "eyebrow": "Vista previa",
     "title": "Diseños y plantillas de menú",
-    "subtitle": "Puedes configurar el diseño según tu patrón de colores de marca o escoger uno de los estilos predeterminados.",
+    "subtitle": "Classic, Modern y Grid reflejan lo que ve el cliente en el móvil — filtros, idiomas y maquetación — antes de afinar colores y tipografía con tu marca.",
     "previous": "Anterior",
     "next": "Siguiente",
     "menuLabel": "Menú",
@@ -125,7 +125,7 @@
       },
       {
         "title": "Panel admin orientado a negocio",
-        "description": "Gestiona menús, ítems, traducciones, QR y configuración clave desde un flujo único y claro."
+        "description": "Edita menús, platos, traducciones, estilos visuales y QR desde un único espacio de menú, con métricas en el panel y facturación/equipo en la barra lateral."
       },
       {
         "title": "Plantillas con identidad de marca",
@@ -146,50 +146,14 @@
     ]
   },
   "AdminPreview": {
-    "eyebrow": "Capturas",
-    "title": "Gestiona tu menú desde el panel admin",
-    "subtitle": "Estas vistas reflejan las pantallas actuales del panel: métricas básicas, menús, ítems, traducciones, QR y ajustes del recurso.",
-    "ctaOpenPanel": "Ver panel real",
+    "eyebrow": "Panel admin",
+    "title": "Así se recorre el espacio de trabajo",
+    "subtitle": "Una vista clara: panel de control, editor de menú (pestañas de estructura, platos, traducciones, estilos y QR) y ajustes del local. La animación resume la navegación real.",
+    "ctaOpenPanel": "Abrir el panel",
     "noteAuth": "Requiere acceso",
-    "liveTag": "Vista real",
-    "screens": {
-      "dashboard": {
-        "title": "Panel",
-        "body": "métricas y resumen del espacio",
-        "chips": ["Menús", "Ítems", "Eventos"],
-        "rows": ["Menús: 3", "Ítems: 24", "Plan: Free"]
-      },
-      "menuEditor": {
-        "title": "Menús",
-        "body": "crear menú y ver menús existentes",
-        "chips": ["Crear", "Listado", "Categorías"],
-        "rows": ["Menú cena", "Menú mediodía", "3 categorías"]
-      },
-      "translations": {
-        "title": "Traducciones",
-        "body": "cola IA y últimas traducciones",
-        "chips": ["Cola IA", "RECURSO", "Idioma"],
-        "rows": ["es · nombre · IA", "en · descripción · IA", "fr · nombre · MANUAL"]
-      },
-      "qrBuilder": {
-        "title": "Constructor QR",
-        "body": "guardar diseño y exportar PNG/SVG/PDF",
-        "chips": ["Color puntos", "URL logo", "Exportar"],
-        "rows": ["Exportar PNG", "Exportar SVG", "Exportar PDF"]
-      },
-      "items": {
-        "title": "Items",
-        "body": "crear ítem y revisar precios",
-        "chips": ["Nombre", "Precio", "Moneda"],
-        "rows": ["Margarita", "EUR 12,50", "Categoría principal"]
-      },
-      "resource": {
-        "title": "Recurso",
-        "body": "slug, locales, monedas y tema",
-        "chips": ["Slug", "Idioma", "Tema"],
-        "rows": ["la-trattoria", "es / en", "Dark Gold"]
-      }
-    }
+    "gifAlt": "Vista del panel de administración de Menuly",
+    "customBadge": "Tu demo",
+    "mediaFootnote": "La captura principal es public/images/marketing/admin-panel.png (actualízala con la app en marcha: npm run capture:admin-previews y ADMIN_CAPTURE_BASE_URL si no es localhost:3005). Opcional: admin-navigation.gif, .png o .webp en la misma carpeta marketing para un clip encima del panel."
   },
   "Steps": {
     "eyebrow": "Implementación guiada",

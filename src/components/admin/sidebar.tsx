@@ -3,15 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Grid3x3,
-  Palette,
-  QrCode,
-  CreditCard,
-  Users,
-  Settings,
-} from "lucide-react";
+import { LayoutDashboard, Grid3x3, CreditCard, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { appRoutes } from "@/lib/routes";
 import { toast } from "sonner";
@@ -29,10 +21,8 @@ export function AdminSidebar({
       dashboard: string;
       businessProfile: string;
       menus: string;
-      items: string;
-      templates: string;
+      menu: string;
       translations: string;
-      qr: string;
       analytics: string;
       billing: string;
       team: string;
@@ -60,9 +50,7 @@ export function AdminSidebar({
   }, [labels.organizationUpdated, pathname, router, searchParams, tenantStatus]);
   const nav = [
     { href: appRoutes.dashboard, icon: LayoutDashboard, label: labels.nav.dashboard },
-    { href: appRoutes.items, icon: Grid3x3, label: labels.nav.items },
-    { href: appRoutes.templates, icon: Palette, label: labels.nav.templates },
-    { href: appRoutes.qr, icon: QrCode, label: labels.nav.qr },
+    { href: appRoutes.items, icon: Grid3x3, label: labels.nav.menu },
     { href: appRoutes.billing, icon: CreditCard, label: labels.nav.billing },
     { href: appRoutes.team, icon: Users, label: labels.nav.team },
     { href: appRoutes.settings, icon: Settings, label: labels.nav.settings },
@@ -120,7 +108,7 @@ export function AdminSidebar({
       </aside>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-2 py-1 backdrop-blur lg:hidden">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-5 gap-1">
           {nav.map((item) => {
             const active = isNavActive(item.href);
             return (

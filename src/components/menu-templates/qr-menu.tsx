@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ArrowUp, Flame, ImageOff, Leaf, Search, SearchX, Sprout, X } from "lucide-react";
+import { Flame, Leaf, Sprout } from "lucide-react";
 import { formatPrice } from "@/config/currencies";
 import { cn } from "@/lib/utils";
 import { shouldOptimizeImageSrc } from "@/lib/images";
@@ -12,25 +11,24 @@ import { buildVariantUrl } from "@/lib/media-cdn";
 import { isVisibleAllergen, localizeAllergenName } from "@/lib/allergens";
 import { Logo } from "@/components/marketing/logo";
 import type { MenuCategory, MenuTheme } from "@/components/menu-templates/types";
+import { EmptyStateCard } from "@/components/menu-templates/qr/empty-state-card";
+import { FilterBar, type DietFilterChip, type DietFilterState } from "@/components/menu-templates/qr/filter-bar";
+import { CategoryTabs } from "@/components/menu-templates/qr/category-tabs";
+import { QuickActionsBar } from "@/components/menu-templates/qr/quick-actions-bar";
+import { resolveMenuDisplayCurrency } from "@/lib/menu/resolve-display-currency";
+import {
+  getMenuItemDetailModalLabels,
+  MenuItemDetailModal,
+} from "@/components/menu-templates/menu-item-detail-modal";
 
 const uiByLocale: Record<
   string,
   {
-    menu: string;
-    mostSold: string;
     noItems: string;
     featuredOnly: string;
-    allItems: string;
-    searchPlaceholder: string;
     noResults: string;
-    categories: string;
-    searchTitle: string;
-    searchAction: string;
-    quickActions: string;
-    backToTop: string;
     vegan: string;
     vegetarian: string;
-    glutenFree: string;
     spicy: string;
     excludeAllergen: string;
     noAllergenExclusion: string;
@@ -39,21 +37,11 @@ const uiByLocale: Record<
   }
 > = {
   es: {
-    menu: "MENÚ QR",
-    mostSold: "RECOMENDACIÓN DEL CHEF",
     noItems: "Sin productos en esta categoría.",
     featuredOnly: "Recomendaciones del chef",
-    allItems: "Todos",
-    searchPlaceholder: "Buscar plato o ingrediente",
-    noResults: "No encontramos resultados para tu búsqueda.",
-    categories: "Categorías",
-    searchTitle: "Buscar en el menú",
-    searchAction: "Buscar",
-    quickActions: "Acciones rápidas",
-    backToTop: "Subir",
+    noResults: "No encontramos resultados para los filtros seleccionados.",
     vegan: "Vegano",
     vegetarian: "Vegetariano",
-    glutenFree: "Sin gluten",
     spicy: "Picante",
     excludeAllergen: "Excluir alérgeno",
     noAllergenExclusion: "Excluir alérgenos",
@@ -61,21 +49,11 @@ const uiByLocale: Record<
     noResultsHint: "Prueba con otro término o limpia filtros.",
   },
   en: {
-    menu: "QR MENU",
-    mostSold: "CHEF RECOMMENDATION",
     noItems: "No items in this category yet.",
     featuredOnly: "Chef recommendations",
-    allItems: "All",
-    searchPlaceholder: "Search dish or ingredient",
-    noResults: "No results found for your search.",
-    categories: "Categories",
-    searchTitle: "Search menu",
-    searchAction: "Search",
-    quickActions: "Quick actions",
-    backToTop: "Top",
+    noResults: "No results found for selected filters.",
     vegan: "Vegan",
     vegetarian: "Vegetarian",
-    glutenFree: "Gluten free",
     spicy: "Spicy",
     excludeAllergen: "Exclude allergen",
     noAllergenExclusion: "Exclude allergens",
@@ -134,7 +112,6 @@ function parseDietFilters(raw: string | null) {
   return {
     vegan: tokens.has("vegan"),
     vegetarian: tokens.has("vegetarian"),
-    glutenFree: tokens.has("glutenFree"),
     spicy: tokens.has("spicy"),
   };
 }
@@ -142,13 +119,11 @@ function parseDietFilters(raw: string | null) {
 function serializeDietFilters(filters: {
   vegan: boolean;
   vegetarian: boolean;
-  glutenFree: boolean;
   spicy: boolean;
 }) {
   const values = [
     filters.vegan ? "vegan" : null,
     filters.vegetarian ? "vegetarian" : null,
-    filters.glutenFree ? "glutenFree" : null,
     filters.spicy ? "spicy" : null,
   ].filter(Boolean);
   return values.join(",");
@@ -196,13 +171,12 @@ export function QrMenuTemplate({
   const [activeCategoryId, setActiveCategoryId] = useState<string>(
     searchParams.get("category") ?? categories[0]?.id ?? ""
   );
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [hasScrolledDown, setHasScrolledDown] = useState(false);
   const [dietFilters, setDietFilters] = useState(() => parseDietFilters(searchParams.get("diet")));
   const [excludedAllergenCode, setExcludedAllergenCode] = useState(
     searchParams.get("excludeAllergen") ?? ""
   );
+  const [detailItemId, setDetailItemId] = useState<string | null>(null);
   const allCurrencies = useMemo(
     () =>
       Array.from(
@@ -214,10 +188,17 @@ export function QrMenuTemplate({
       ),
     [categories]
   );
-  const [activeCurrency, setActiveCurrency] = useState(
-    searchParams.get("currency") ?? initialCurrency ?? allCurrencies[0] ?? "EUR"
+  const displayCurrency = useMemo(
+    () =>
+      resolveMenuDisplayCurrency(initialCurrency, searchParams.get("currency"), allCurrencies),
+    [initialCurrency, allCurrencies, searchParams]
   );
   const ui = getLocaleUi(locale);
+  const detailLabels = useMemo(() => getMenuItemDetailModalLabels(locale), [locale]);
+  const detailItem = useMemo(
+    () => categories.flatMap((c) => c.items).find((i) => i.id === detailItemId) ?? null,
+    [categories, detailItemId]
+  );
   const allergenCodes = useMemo(() => collectAllergenCodes(categories), [categories]);
   const viewedItemIdsRef = useRef<Set<string>>(new Set());
   const canTrackItems = Boolean(analytics?.enableItemTracking && analytics.resourceId);
@@ -228,18 +209,25 @@ export function QrMenuTemplate({
     () => categories.find((category) => category.id === activeCategoryId) ?? categories[0],
     [activeCategoryId, categories]
   );
+  const urlSyncStateRef = useRef({
+    activeCategoryId,
+    excludedAllergenCode,
+    dietFilters,
+  });
+  urlSyncStateRef.current = {
+    activeCategoryId,
+    excludedAllergenCode,
+    dietFilters,
+  };
   useEffect(() => {
+    const s = urlSyncStateRef.current;
     const categoryFromUrl = searchParams.get("category");
-    const searchFromUrl = searchParams.get("search");
-    const currencyFromUrl = searchParams.get("currency");
     const excludedAllergenFromUrl = searchParams.get("excludeAllergen") ?? "";
     const dietFromUrl = parseDietFilters(searchParams.get("diet"));
-    if (categoryFromUrl && categoryFromUrl !== activeCategoryId) setActiveCategoryId(categoryFromUrl);
-    if ((searchFromUrl ?? "") !== search) setSearch(searchFromUrl ?? "");
-    if (currencyFromUrl && currencyFromUrl !== activeCurrency) setActiveCurrency(currencyFromUrl);
-    if (excludedAllergenFromUrl !== excludedAllergenCode) setExcludedAllergenCode(excludedAllergenFromUrl);
-    if (JSON.stringify(dietFromUrl) !== JSON.stringify(dietFilters)) setDietFilters(dietFromUrl);
-  }, [searchParams]); // Intentional URL-driven sync for back/forward navigation.
+    if (categoryFromUrl && categoryFromUrl !== s.activeCategoryId) setActiveCategoryId(categoryFromUrl);
+    if (excludedAllergenFromUrl !== s.excludedAllergenCode) setExcludedAllergenCode(excludedAllergenFromUrl);
+    if (JSON.stringify(dietFromUrl) !== JSON.stringify(s.dietFilters)) setDietFilters(dietFromUrl);
+  }, [searchParams]);
 
   function getLocaleHref(nextLocale: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -247,41 +235,34 @@ export function QrMenuTemplate({
     return `${pathname}?${params.toString()}`;
   }
 
-  function setUrlState(next: {
-    categoryId?: string;
-    searchValue?: string;
-    currencyValue?: string;
-    dietValue?: { vegan: boolean; vegetarian: boolean; glutenFree: boolean; spicy: boolean };
-    excludedAllergen?: string;
-  }) {
-    const params = new URLSearchParams(searchParams.toString());
-    const category = next.categoryId ?? activeCategoryId;
-    const searchValue = next.searchValue ?? search;
-    const currencyValue = next.currencyValue ?? activeCurrency;
-    const dietValue = next.dietValue ?? dietFilters;
-    const nextExcludedAllergen = next.excludedAllergen ?? excludedAllergenCode;
-    if (category) params.set("category", category);
-    else params.delete("category");
-    if (searchValue.trim()) params.set("search", searchValue.trim());
-    else params.delete("search");
-    params.delete("featured");
-    if (currencyValue) params.set("currency", currencyValue);
-    else params.delete("currency");
-    const dietToken = serializeDietFilters(dietValue);
-    if (dietToken) params.set("diet", dietToken);
-    else params.delete("diet");
-    if (nextExcludedAllergen) params.set("excludeAllergen", nextExcludedAllergen);
-    else params.delete("excludeAllergen");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }
-
-  const normalizedSearch = search.trim().toLowerCase();
+  const setUrlState = useCallback(
+    (next: {
+      categoryId?: string;
+      dietValue?: { vegan: boolean; vegetarian: boolean; spicy: boolean };
+      excludedAllergen?: string;
+    }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const category = next.categoryId ?? activeCategoryId;
+      const dietValue = next.dietValue ?? dietFilters;
+      const nextExcludedAllergen = next.excludedAllergen ?? excludedAllergenCode;
+      if (category) params.set("category", category);
+      else params.delete("category");
+      params.delete("search");
+      params.delete("featured");
+      const dietToken = serializeDietFilters(dietValue);
+      if (dietToken) params.set("diet", dietToken);
+      else params.delete("diet");
+      if (nextExcludedAllergen) params.set("excludeAllergen", nextExcludedAllergen);
+      else params.delete("excludeAllergen");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [activeCategoryId, dietFilters, excludedAllergenCode, pathname, router, searchParams]
+  );
 
   const matchesActiveFilters = useCallback(
     (item: MenuCategory["items"][number]) => {
       if (dietFilters.vegan && !item.isVegan) return false;
       if (dietFilters.vegetarian && !item.isVegetarian) return false;
-      if (dietFilters.glutenFree && !item.isGlutenFree) return false;
       if (dietFilters.spicy && !item.isSpicy) return false;
       if (
         excludedAllergenCode &&
@@ -289,34 +270,9 @@ export function QrMenuTemplate({
       ) {
         return false;
       }
-      if (!normalizedSearch) return true;
-      const allergenNames = (item.allergens ?? [])
-        .map((entry) => localizeAllergenName(entry.allergen.code, locale, entry.allergen.name).toLowerCase())
-        .join(" ");
-      const tags = [
-        item.isVegan ? ui.vegan.toLowerCase() : "",
-        item.isVegetarian ? ui.vegetarian.toLowerCase() : "",
-        item.isGlutenFree ? ui.glutenFree.toLowerCase() : "",
-        item.isSpicy ? ui.spicy.toLowerCase() : "",
-      ].join(" ");
-
-      return (
-        item.name.toLowerCase().includes(normalizedSearch) ||
-        item.description?.toLowerCase().includes(normalizedSearch) ||
-        allergenNames.includes(normalizedSearch) ||
-        tags.includes(normalizedSearch)
-      );
+      return true;
     },
-    [
-      dietFilters,
-      excludedAllergenCode,
-      locale,
-      normalizedSearch,
-      ui.glutenFree,
-      ui.spicy,
-      ui.vegan,
-      ui.vegetarian,
-    ]
+    [dietFilters, excludedAllergenCode]
   );
 
   const visibleItems = useMemo(() => {
@@ -339,6 +295,16 @@ export function QrMenuTemplate({
       ),
     [categories, matchesActiveFilters]
   );
+  const showSpicyFilter = dietFilters.spicy || visibleItems.some((item) => item.isSpicy);
+  const dietFilterChips: ReadonlyArray<{
+    key: "vegan" | "vegetarian" | "spicy";
+    label: string;
+    icon: typeof Leaf;
+  }> = [
+    { key: "vegan", label: ui.vegan, icon: Leaf },
+    { key: "vegetarian", label: ui.vegetarian, icon: Sprout },
+    ...(showSpicyFilter ? [{ key: "spicy" as const, label: ui.spicy, icon: Flame }] : []),
+  ];
 
   const trackItemEvent = useCallback(
     (type: "ITEM_VIEW" | "ITEM_CLICK", itemId: string) => {
@@ -387,28 +353,6 @@ export function QrMenuTemplate({
   }, [canTrackItems, trackItemEvent, visibleItems]);
 
   useEffect(() => {
-    if (!search.trim()) return;
-    const timeout = setTimeout(() => {
-      trackUxEvent("SEARCH", { query: search.trim(), results: visibleItems.length });
-      if (visibleItems.length === 0) {
-        trackUxEvent("SEARCH_NO_RESULTS", { query: search.trim() });
-      }
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [search, trackUxEvent, visibleItems.length]);
-
-  useEffect(() => {
-    if (!isSearchModalOpen) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsSearchModalOpen(false);
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isSearchModalOpen]);
-
-  useEffect(() => {
     function onScroll() {
       setHasScrolledDown(window.scrollY > 220);
     }
@@ -418,13 +362,43 @@ export function QrMenuTemplate({
   }, []);
 
   const hasActiveFilters =
-    Boolean(search.trim()) ||
-    dietFilters.vegan ||
-    dietFilters.vegetarian ||
-    dietFilters.glutenFree ||
-    dietFilters.spicy ||
-    Boolean(excludedAllergenCode);
+    dietFilters.vegan || dietFilters.vegetarian || dietFilters.spicy || Boolean(excludedAllergenCode);
   const showQuickActions = hasActiveFilters || hasScrolledDown;
+  const handleToggleDietFilter = useCallback(
+    (key: keyof DietFilterState, enabled: boolean) => {
+      const next = { ...dietFilters, [key]: enabled };
+      setDietFilters(next);
+      setUrlState({ dietValue: next });
+      trackUxEvent("DIET_FILTER_TOGGLE", { filter: key, enabled });
+    },
+    [dietFilters, setUrlState, trackUxEvent]
+  );
+  const handleExcludeAllergenChange = useCallback(
+    (nextCode: string) => {
+      setExcludedAllergenCode(nextCode);
+      setUrlState({ excludedAllergen: nextCode });
+      trackUxEvent("ALLERGEN_EXCLUDE_CHANGE", { allergen: nextCode || "none" });
+    },
+    [setUrlState, trackUxEvent]
+  );
+  const handleCategoryChange = useCallback(
+    (categoryId: string) => {
+      setActiveCategoryId(categoryId);
+      setUrlState({ categoryId });
+      trackUxEvent("CATEGORY_CHANGE", { categoryId, source: "category_tabs" });
+    },
+    [setUrlState, trackUxEvent]
+  );
+  const handleClearFilters = useCallback(() => {
+    const clearedDiet = { vegan: false, vegetarian: false, spicy: false };
+    setDietFilters(clearedDiet);
+    setExcludedAllergenCode("");
+    setUrlState({
+      dietValue: clearedDiet,
+      excludedAllergen: "",
+    });
+    trackUxEvent("FILTERS_CLEAR");
+  }, [setUrlState, trackUxEvent]);
 
   return (
     <div
@@ -446,113 +420,26 @@ export function QrMenuTemplate({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-15%,hsl(var(--primary)/0.14),transparent_68%)]" />
       <div className="pointer-events-none absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent" />
       <div className={cn("relative space-y-4.5", theme?.density === "compact" ? "text-sm" : "")}>
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-border/70 bg-card/45 p-3 backdrop-blur-sm">
-          <div>
+        <div className="grid grid-cols-1 gap-3 rounded-2xl border border-border/70 bg-card/45 p-3 backdrop-blur-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="min-w-0 pr-1">
             <div className="mb-1">
               <Logo className="text-sm" />
             </div>
-            <h1 className="mt-1 font-display text-[2rem] font-bold leading-none sm:text-[2.2rem]">{title}</h1>
+            <h1 className="mt-1 break-words font-display text-[1.65rem] font-bold leading-tight sm:text-[2.05rem]">
+              {title}
+            </h1>
           </div>
 
-          <div className="flex flex-col items-end gap-2">
-            {locales.length > 1 ? (
-              <label className="block w-[88px]">
-                <span className="sr-only">{locale === "es" ? "Idioma" : "Language"}</span>
-                <select
-                  value={locale}
-                  onChange={(event) => {
-                    router.replace(getLocaleHref(event.target.value), { scroll: false });
-                  }}
-                  aria-label={locale === "es" ? "Idioma" : "Language"}
-                  className="h-9 w-full rounded-xl border border-border bg-card/80 px-2 text-[11px] font-semibold uppercase outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/25"
-                  style={
-                    theme
-                      ? {
-                          borderColor: theme.border,
-                          backgroundColor: theme.surface,
-                          color: theme.text,
-                        }
-                      : undefined
-                  }
-                >
-                  {locales.map((enabledLocale) => (
-                    <option key={enabledLocale} value={enabledLocale}>
-                      {getLocaleFlag(enabledLocale)} {getLocaleShort(enabledLocale)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setIsSearchModalOpen(true)}
-              aria-label={ui.searchAction}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card/80 text-muted-foreground transition-all duration-200 hover:text-foreground"
-              style={
-                theme
-                  ? {
-                      borderColor: theme.border,
-                      backgroundColor: theme.surface,
-                      color: theme.text,
-                    }
-                  : undefined
-              }
-            >
-              <Search className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="sticky top-2 z-10 space-y-2">
-          {(() => {
-            const showSpicy = dietFilters.spicy || visibleItems.some((item) => item.isSpicy);
-            const chips: Array<{ key: "vegan" | "vegetarian" | "spicy"; label: string; icon: typeof Leaf }> = [
-              { key: "vegan", label: ui.vegan, icon: Leaf },
-              { key: "vegetarian", label: ui.vegetarian, icon: Sprout },
-              ...(showSpicy ? [{ key: "spicy" as const, label: ui.spicy, icon: Flame }] : []),
-            ];
-            return (
-              <div className={cn("grid gap-2", showSpicy ? "grid-cols-4" : "grid-cols-3")}>
-                {chips.map((chip) => {
-              const enabled = dietFilters[chip.key as keyof typeof dietFilters];
-              const ChipIcon = chip.icon;
-              return (
-                <button
-                  key={chip.key}
-                  type="button"
-                  onClick={() => {
-                    const next = { ...dietFilters, [chip.key]: !enabled };
-                    setDietFilters(next);
-                    setUrlState({ dietValue: next });
-                    trackUxEvent("DIET_FILTER_TOGGLE", { filter: chip.key, enabled: !enabled });
-                  }}
-                  className={cn(
-                    "inline-flex min-h-9 w-full items-center justify-center rounded-full border px-2.5 text-[11px] font-medium transition-all duration-200 ease-out active:scale-[0.98]",
-                    enabled
-                      ? chip.key === "spicy"
-                        ? "border-rose-300/70 bg-rose-500/12 text-rose-700 dark:border-rose-400/40 dark:text-rose-300"
-                        : "border-primary/40 bg-primary/12 text-primary"
-                      : "border-border bg-card/70 text-muted-foreground hover:border-primary/25"
-                  )}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <ChipIcon className="h-3.5 w-3.5" />
-                    {chip.label}
-                  </span>
-                </button>
-              );
-            })}
-            <label className="relative">
-              <span className="sr-only">{ui.excludeAllergen}</span>
+          {locales.length > 1 ? (
+            <label className="block w-full max-w-full justify-self-stretch sm:w-auto sm:max-w-[10rem] sm:justify-self-end">
+              <span className="sr-only">{locale === "es" ? "Idioma" : "Language"}</span>
               <select
-                value={excludedAllergenCode}
+                value={locale}
                 onChange={(event) => {
-                  const nextCode = event.target.value;
-                  setExcludedAllergenCode(nextCode);
-                  setUrlState({ excludedAllergen: nextCode });
-                  trackUxEvent("ALLERGEN_EXCLUDE_CHANGE", { allergen: nextCode || "none" });
+                  router.replace(getLocaleHref(event.target.value), { scroll: false });
                 }}
-                className="min-h-9 w-full rounded-full border border-border bg-card/70 px-2.5 text-[11px] font-medium text-muted-foreground outline-none transition-all duration-200 ease-out focus:border-primary focus:ring-2 focus:ring-primary/20"
+                aria-label={locale === "es" ? "Idioma" : "Language"}
+                className="h-9 w-full max-w-full cursor-pointer rounded-xl border border-border/80 bg-background py-0 pl-2 pr-8 text-[10px] font-semibold uppercase tracking-wide text-foreground shadow-sm outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/25 dark:border-zinc-500/60 dark:bg-zinc-950/90 dark:text-zinc-50"
                 style={
                   theme
                     ? {
@@ -563,41 +450,28 @@ export function QrMenuTemplate({
                     : undefined
                 }
               >
-                <option value="">{ui.noAllergenExclusion}</option>
-                {allergenCodes.map((code) => (
-                  <option key={code} value={code}>
-                    {localizeAllergenName(code, locale, code)}
+                {locales.map((enabledLocale) => (
+                  <option key={enabledLocale} value={enabledLocale}>
+                    {getLocaleFlag(enabledLocale)} {getLocaleShort(enabledLocale)}
                   </option>
                 ))}
               </select>
             </label>
-              </div>
-            );
-          })()}
-          {allCurrencies.length > 1 ? (
-            <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5">
-              {allCurrencies.map((currency) => (
-                <button
-                  key={currency}
-                  type="button"
-                  onClick={() => {
-                    setActiveCurrency(currency);
-                    setUrlState({ currencyValue: currency });
-                    trackUxEvent("CURRENCY_CHANGE", { currency });
-                  }}
-                  className={cn(
-                    "min-h-8.5 shrink-0 rounded-full border px-2.5 text-[11px] font-medium transition-all duration-200 ease-out active:scale-[0.98]",
-                    activeCurrency === currency
-                      ? "border-primary/40 bg-primary/12 text-primary"
-                      : "border-border bg-card/70 text-muted-foreground hover:border-primary/25"
-                  )}
-                >
-                  {currency}
-                </button>
-              ))}
-            </div>
           ) : null}
         </div>
+
+        <FilterBar
+          showSpicyFilter={showSpicyFilter}
+          dietFilterChips={dietFilterChips}
+          dietFilters={dietFilters}
+          onToggleDietFilter={handleToggleDietFilter}
+          ui={ui}
+          excludedAllergenCode={excludedAllergenCode}
+          onExcludeAllergenChange={handleExcludeAllergenChange}
+          allergenCodes={allergenCodes}
+          locale={locale}
+          theme={theme}
+        />
 
         {featuredItems.length > 0 ? (
           <section className="space-y-2.5">
@@ -607,15 +481,13 @@ export function QrMenuTemplate({
             <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5">
               {featuredItems.map((item) => {
                 const selectedPrice =
-                  item.prices.find((price) => price.currency === activeCurrency) ?? item.prices[0] ?? null;
+                  item.prices.find((price) => price.currency === displayCurrency) ?? item.prices[0] ?? null;
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => {
-                      setActiveCategoryId(item.categoryId);
-                      setUrlState({ categoryId: item.categoryId });
-                      trackUxEvent("CATEGORY_CHANGE", { categoryId: item.categoryId, source: "featured_carousel" });
+                      setDetailItemId(item.id);
                       trackItemEvent("ITEM_CLICK", item.id);
                     }}
                     className="min-w-[244px] max-w-[244px] snap-start rounded-3xl border border-border/80 bg-card/90 p-2.5 text-left shadow-[0_14px_30px_-24px_rgba(0,0,0,0.5)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-22px_rgba(0,0,0,0.55)] active:scale-[0.99]"
@@ -650,116 +522,12 @@ export function QrMenuTemplate({
           </section>
         ) : null}
 
-        {isSearchModalOpen ? (
-          <div
-            className="absolute inset-0 z-30 bg-black/25"
-            onClick={() => setIsSearchModalOpen(false)}
-          >
-            <div
-              className="absolute left-3 right-3 top-[88px] rounded-xl border border-border bg-background/98 p-2.5 shadow-[0_18px_36px_-22px_rgba(0,0,0,0.75)] backdrop-blur"
-              style={theme ? { borderColor: theme.border, backgroundColor: theme.background } : undefined}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="mb-1.5 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  {ui.searchTitle}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsSearchModalOpen(false)}
-                  className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={locale === "es" ? "Cerrar" : "Close"}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <label className="relative block">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  autoFocus
-                  value={search}
-                  onChange={(event) => {
-                    const nextSearch = event.target.value;
-                    setSearch(nextSearch);
-                    setUrlState({ searchValue: nextSearch });
-                  }}
-                  placeholder={ui.searchPlaceholder}
-                  aria-label={ui.searchPlaceholder}
-                  className="h-10 w-full rounded-lg border border-border bg-card/80 pl-9 pr-9 text-sm outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/25"
-                  style={
-                    theme
-                      ? {
-                          borderColor: theme.border,
-                          backgroundColor: theme.surface,
-                          color: theme.text,
-                        }
-                      : undefined
-                  }
-                />
-                {search ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearch("");
-                      setUrlState({ searchValue: "" });
-                      trackUxEvent("SEARCH_CLEAR");
-                    }}
-                    aria-label={locale === "es" ? "Limpiar búsqueda" : "Clear search"}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </label>
-            </div>
-          </div>
-        ) : null}
-
-        <div
-          className={cn(
-            "mb-3 grid gap-2.5",
-            categories.length <= 3 ? "grid-cols-3" : "grid-cols-2"
-          )}
-        >
-          {categories.map((category) => {
-            const isActive = (activeCategory?.id ?? "") === category.id;
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => {
-                  setActiveCategoryId(category.id);
-                  setUrlState({ categoryId: category.id });
-                  trackUxEvent("CATEGORY_CHANGE", { categoryId: category.id, source: "category_tabs" });
-                }}
-                className={cn(
-                  "min-h-9 rounded-2xl border px-3 text-[13px] font-semibold transition-all duration-200 ease-out active:scale-[0.98]",
-                  "w-full whitespace-nowrap",
-                  isActive
-                    ? "border-primary bg-primary text-primary-foreground shadow-[0_12px_20px_-15px_hsl(var(--primary)/0.85)]"
-                    : "border-border/90 bg-card/55 text-muted-foreground hover:border-primary/25 hover:bg-card/85 hover:text-foreground"
-                )}
-                style={
-                  theme
-                    ? isActive
-                      ? {
-                          borderColor: theme.primary,
-                          backgroundColor: theme.primary,
-                          color: theme.background,
-                        }
-                      : {
-                          borderColor: theme.border,
-                          backgroundColor: `${theme.surface}CC`,
-                          color: theme.text,
-                        }
-                    : undefined
-                }
-              >
-                {category.name}
-              </button>
-            );
-          })}
-        </div>
+        <CategoryTabs
+          categories={categories}
+          activeCategoryId={activeCategory?.id ?? ""}
+          onCategoryChange={handleCategoryChange}
+          theme={theme}
+        />
 
         <section className="pb-20">
           <div className="mb-2" role="status" aria-live="polite" />
@@ -768,11 +536,13 @@ export function QrMenuTemplate({
             {visibleItems.length > 0 ? (
               visibleItems.map((item) => {
                 const selectedPrice =
-                  item.prices.find((price) => price.currency === activeCurrency) ?? item.prices[0] ?? null;
+                  item.prices.find((price) => price.currency === displayCurrency) ?? item.prices[0] ?? null;
                 return (
-                  <article
+                  <button
                     key={item.id}
+                    type="button"
                     onClick={() => {
+                      setDetailItemId(item.id);
                       trackItemEvent("ITEM_CLICK", item.id);
                       if (!firstClickTrackedRef.current) {
                         firstClickTrackedRef.current = true;
@@ -782,12 +552,13 @@ export function QrMenuTemplate({
                         });
                       }
                     }}
-                    className="group flex flex-col rounded-[22px] border border-border/80 bg-background/95 p-3 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_20px_38px_-26px_rgba(0,0,0,0.58)] active:scale-[0.995] sm:p-3.5"
+                    className="group flex w-full flex-col rounded-[22px] border border-border/80 bg-background/95 p-3 text-left transition-all duration-200 ease-out outline-none hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_20px_38px_-26px_rgba(0,0,0,0.58)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.995] sm:p-3.5"
                     style={
                       theme
                         ? {
                             borderColor: theme.border,
                             backgroundColor: theme.background,
+                            ["--tw-ring-offset-color" as string]: theme.background,
                           }
                         : undefined
                     }
@@ -816,11 +587,6 @@ export function QrMenuTemplate({
                     {item.isVegetarian ? (
                       <span className="rounded-full border border-border/80 bg-card/60 px-2 py-0.5 text-[11.5px] font-medium leading-none text-muted-foreground">
                         {ui.vegetarian}
-                      </span>
-                    ) : null}
-                    {item.isGlutenFree ? (
-                      <span className="rounded-full border border-border/80 bg-card/60 px-2 py-0.5 text-[11.5px] font-medium leading-none text-muted-foreground">
-                        {ui.glutenFree}
                       </span>
                     ) : null}
                     {item.isSpicy ? (
@@ -858,84 +624,36 @@ export function QrMenuTemplate({
                         : "-"}
                     </span>
                   </div>
-                </article>
+                </button>
                 );
               })
-            ) : search ? (
-              <div
-                className="rounded-2xl border border-dashed border-border/80 bg-card/40 p-4 text-center"
-                style={theme ? { borderColor: theme.border, backgroundColor: `${theme.surface}99` } : undefined}
-              >
-                <div className="mx-auto mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/80 bg-background/80">
-                  <SearchX className="h-4.5 w-4.5 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium text-foreground">{ui.noResults}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{ui.noResultsHint}</p>
-              </div>
+            ) : hasActiveFilters ? (
+              <EmptyStateCard icon="search" title={ui.noResults} hint={ui.noResultsHint} theme={theme} />
             ) : (
-              <div
-                className="rounded-2xl border border-dashed border-border/80 bg-card/40 p-4 text-center"
-                style={theme ? { borderColor: theme.border, backgroundColor: `${theme.surface}99` } : undefined}
-              >
-                <div className="mx-auto mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/80 bg-background/80">
-                  <ImageOff className="h-4.5 w-4.5 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium text-foreground">{ui.noItems}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{ui.noItemsHint}</p>
-              </div>
+              <EmptyStateCard icon="items" title={ui.noItems} hint={ui.noItemsHint} theme={theme} />
             )}
           </div>
         </section>
 
-        {showQuickActions ? (
-          <div className="sticky bottom-2 z-20 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                const clearedDiet = { vegan: false, vegetarian: false, glutenFree: false, spicy: false };
-                setDietFilters(clearedDiet);
-                setExcludedAllergenCode("");
-                setUrlState({
-                  searchValue: "",
-                  dietValue: clearedDiet,
-                  excludedAllergen: "",
-                });
-                trackUxEvent("FILTERS_CLEAR");
-              }}
-              className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-border bg-card/65 px-2.5 text-[12px] font-semibold text-muted-foreground transition-all duration-200 ease-out hover:text-foreground active:scale-[0.98]"
-              style={
-                theme
-                  ? {
-                      borderColor: theme.border,
-                      backgroundColor: theme.surface,
-                      color: theme.text,
-                    }
-                  : undefined
-              }
-            >
-              <X className="h-3.5 w-3.5" />
-              {locale === "es" ? "Limpiar filtros" : "Clear filters"}
-            </button>
-            <button
-              type="button"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-border bg-card/65 px-2.5 text-[12px] font-semibold text-muted-foreground transition-all duration-200 ease-out hover:text-foreground active:scale-[0.98]"
-              style={
-                theme
-                  ? {
-                      borderColor: theme.border,
-                      backgroundColor: theme.surface,
-                      color: theme.text,
-                    }
-                  : undefined
-              }
-            >
-              <ArrowUp className="h-3.5 w-3.5" />
-              {locale === "es" ? "Ir arriba" : "Back to top"}
-            </button>
-          </div>
-        ) : null}
+        <QuickActionsBar
+          show={showQuickActions}
+          onClear={handleClearFilters}
+          onBackToTop={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          locale={locale}
+          theme={theme}
+        />
+
+        <MenuItemDetailModal
+          item={detailItem}
+          open={detailItem !== null}
+          onClose={() => setDetailItemId(null)}
+          locale={locale}
+          displayCurrency={displayCurrency}
+          canShowAllergens={canShowAllergens}
+          labels={detailLabels}
+          variant="modern"
+          theme={theme}
+        />
       </div>
     </div>
   );

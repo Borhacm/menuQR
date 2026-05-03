@@ -2,6 +2,9 @@ import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/marketing/logo";
 import { db } from "@/lib/db";
+import Link from "next/link";
+import { appRoutes } from "@/lib/routes";
+import { brand } from "@/config/brand";
 import { resolveTenantMembership, setTenantCookieForUser } from "@/lib/auth/tenant";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -36,7 +39,13 @@ export async function AdminHeader({
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 sm:px-6">
-      <Logo className="text-base" />
+      <Link
+        href={appRoutes.dashboard}
+        className="-m-2 inline-flex rounded-md p-2 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label={`${brand.name} app`}
+      >
+        <Logo className="text-base" linkMark={false} />
+      </Link>
       <div className="flex items-center gap-2">
         {memberships.length > 1 ? (
           <form

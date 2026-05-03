@@ -237,7 +237,6 @@ model Item {
   isFeatured   Boolean  @default(false)
   isVegan      Boolean  @default(false)
   isVegetarian Boolean  @default(false)
-  isGlutenFree Boolean  @default(false)
   isSpicy      Boolean  @default(false)
   calories     Int?
   createdAt    DateTime @default(now())

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PublicMenuPage from "@/app/(public)/_menu/[slug]/page";
 
 function getLegacySlugMap() {
@@ -20,13 +20,14 @@ export default async function LegacyAwareMenuPage({
   searchParams: Promise<{ locale?: string; currency?: string; template?: string }>;
 }) {
   const { slug } = await params;
+  if (typeof slug !== "string" || !slug.trim()) {
+    notFound();
+  }
   const map = getLegacySlugMap();
   const nextSlug = map[slug];
   if (nextSlug && nextSlug !== slug) {
     redirect(`/m/${nextSlug}?source=qr`);
   }
-  return PublicMenuPage({
-    params: Promise.resolve({ slug }),
-    searchParams,
-  });
+  // Render as a Server Component tree (not a plain function call) so `params` flow matches Next/Vercel.
+  return <PublicMenuPage params={Promise.resolve({ slug })} searchParams={searchParams} />;
 }

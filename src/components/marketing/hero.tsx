@@ -150,7 +150,7 @@ function PreviewPhone({ className, lang }: { className?: string; lang: string })
           <div className="mt-4 grid grid-cols-2 gap-2">
             {[
               { name: "Bruschetta al pomodoro", price: "€7.20", image: "/images/dishes/bruschetta.jpg" },
-              { name: "Caprese salad", price: "€9.80", image: "/images/dishes/caprese.jpg" },
+              { name: "Risotto ai funghi", price: "€12.90", image: "/images/dishes/risotto.jpg" },
             ].map((dish) => (
               <div key={dish.name} className="rounded-xl border border-zinc-700 bg-zinc-900/70 p-1.5">
                 <Image

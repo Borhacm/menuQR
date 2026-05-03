@@ -24,7 +24,7 @@ export async function updateTemplateAction(formData: FormData) {
     where: { id: ctx.resource.id },
     data: { templateId },
   });
-  revalidatePath(appRoutes.templates);
+  revalidatePath(appRoutes.items);
   revalidatePath(`/m/${ctx.resource.slug}`);
 }
 
@@ -47,8 +47,8 @@ export async function updateTemplateStylesAction(formData: FormData) {
     },
   });
 
-  revalidatePath(appRoutes.templates);
+  revalidatePath(appRoutes.items);
   revalidatePath(`/m/${ctx.resource.slug}`);
-  redirect(`${appRoutes.templates}?saved=styles`);
+  redirect(`${appRoutes.items}?tab=style-editor&saved=styles`);
 }
 

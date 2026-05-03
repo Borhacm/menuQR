@@ -11,7 +11,6 @@ export type MenuItem = {
   isFeatured?: boolean;
   isVegan?: boolean;
   isVegetarian?: boolean;
-  isGlutenFree?: boolean;
   isSpicy?: boolean;
   images?: { id: string; url: string; alt: string | null }[];
   allergens?: { allergen: { id: string; code?: string; name: string; icon: string | null } }[];

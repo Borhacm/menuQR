@@ -71,7 +71,7 @@
       },
       "management": {
         "title": "Easy Online Menu Management",
-        "description": "Add, sort and edit items with intuitive controls. Our AI photo-parsing assistant builds your menu from images for a fast start."
+        "description": "Add, sort and edit items with intuitive controls in one menu workflow built for day-to-day operations."
       },
       "analytics": {
         "title": "Online Menu Analytics",
@@ -87,7 +87,7 @@
       },
       "media": {
         "title": "Optimized media delivery",
-        "description": "Upload images with secure validation and serve them efficiently. Pro unlocks CDN transforms and WebP variants."
+        "description": "Attach photos to each dish from the admin, with sensible file limits so your menu stays quick to load on phones."
       },
       "currency": {
         "title": "Multi-Currency Menu",
@@ -101,9 +101,9 @@
     "learnMore": "Learn more"
   },
   "Templates": {
-    "eyebrow": "Live panel",
+    "eyebrow": "Live previews",
     "title": "Menu designs & templates",
-    "subtitle": "You can adapt the design to your brand color system or choose one of the preset styles.",
+    "subtitle": "Classic, Modern and Grid mirror what guests see on their phones — filters, languages and layout — before you tune colors and typography to your brand.",
     "previous": "Previous",
     "next": "Next",
     "menuLabel": "Menu",
@@ -125,7 +125,7 @@
       },
       {
         "title": "Business-ready admin panel",
-        "description": "Manage menus, items, translations, QR and key settings through one clear operational flow."
+        "description": "Edit menus, dishes, translations, visual styles and QR from one menu workspace, with dashboard metrics plus billing and team access from the sidebar."
       },
       {
         "title": "Brand-aligned templates",
@@ -146,50 +146,14 @@
     ]
   },
   "AdminPreview": {
-    "eyebrow": "Screenshots",
-    "title": "Manage your menu in the admin panel",
-    "subtitle": "These cards mirror current admin screens: core metrics, menus, items, translations, QR and resource settings.",
-    "ctaOpenPanel": "Open real panel",
+    "eyebrow": "Admin",
+    "title": "How the workspace feels in motion",
+    "subtitle": "A single flow: dashboard, the menu editor (structure, dishes, translations, styles and QR tabs), billing, team and venue settings. The clip below mirrors real navigation.",
+    "ctaOpenPanel": "Open the panel",
     "noteAuth": "Requires login",
-    "liveTag": "Live view",
-    "screens": {
-      "dashboard": {
-        "title": "Dashboard",
-        "body": "metrics and workspace summary",
-        "chips": ["Menus", "Items", "Events"],
-        "rows": ["Menus: 3", "Items: 24", "Plan: free"]
-      },
-      "menuEditor": {
-        "title": "Menus",
-        "body": "create menu and list existing menus",
-        "chips": ["Create", "List", "Categories"],
-        "rows": ["Dinner menu", "Lunch menu", "3 categories"]
-      },
-      "translations": {
-        "title": "Translations",
-        "body": "AI queue and latest translations",
-        "chips": ["AI queue", "RESOURCE", "Locale"],
-        "rows": ["es · name · AI", "en · description · AI", "fr · name · MANUAL"]
-      },
-      "qrBuilder": {
-        "title": "QR builder",
-        "body": "save design and export PNG/SVG/PDF",
-        "chips": ["Dots color", "Logo URL", "Export"],
-        "rows": ["Export PNG", "Export SVG", "Export PDF"]
-      },
-      "items": {
-        "title": "Items",
-        "body": "create item and review prices",
-        "chips": ["Name", "Price", "Currency"],
-        "rows": ["Margherita", "EUR 12.50", "Main category"]
-      },
-      "resource": {
-        "title": "Resource",
-        "body": "slug, locales, currencies and theme",
-        "chips": ["Slug", "Locale", "Theme"],
-        "rows": ["la-trattoria", "es / en", "Dark Gold"]
-      }
-    }
+    "gifAlt": "Menuly admin panel preview",
+    "customBadge": "Your clip",
+    "mediaFootnote": "The main still is public/images/marketing/admin-panel.png — regenerate it with the app running: npm run capture:admin-previews (set ADMIN_CAPTURE_BASE_URL if not http://localhost:3005). Optional: admin-navigation.gif, .png, or .webp in the same marketing folder for a short clip above the panel."
   },
   "Steps": {
     "eyebrow": "Guided rollout",

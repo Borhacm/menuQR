@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/config/brand";
+import { resolveAbsoluteSiteOrigin } from "@/lib/utils";
 import { cookies } from "next/headers";
 
 const geistSans = Geist({
@@ -27,9 +28,7 @@ export const metadata: Metadata = {
     template: `%s · ${brand.name}`,
   },
   description: brand.description,
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-  ),
+  metadataBase: resolveAbsoluteSiteOrigin(),
   openGraph: {
     title: `${brand.name} — ${brand.tagline}`,
     description: brand.description,

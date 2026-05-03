@@ -70,11 +70,17 @@ export function ItemImagePicker({
   name = "imageUrl",
   dishName,
   onImageUrlChange,
+  uploadOnly = false,
+  uploadButtonLabel,
+  autoSubmitFormId,
   labels,
 }: {
   name?: string;
   dishName?: string;
   onImageUrlChange?: (url: string) => void;
+  uploadOnly?: boolean;
+  uploadButtonLabel?: string;
+  autoSubmitFormId?: string;
   labels: {
     uploading: string;
     uploadFailedRetry: string;
@@ -132,6 +138,12 @@ export function ItemImagePicker({
       onImageUrlChange?.(data.url);
       setUploadState("success");
       setMessage(labels.uploadReady);
+      if (autoSubmitFormId) {
+        const form = document.getElementById(autoSubmitFormId);
+        if (form instanceof HTMLFormElement) {
+          form.requestSubmit();
+        }
+      }
     } catch {
       setUploadState("error");
       setMessage(labels.uploadFailedConnection);
@@ -160,22 +172,26 @@ export function ItemImagePicker({
           onClick={() => fileInputRef.current?.click()}
           className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent/10"
         >
-          {labels.uploadImage}
+          {uploadButtonLabel ?? labels.uploadImage}
         </button>
-        <button
-          type="button"
-          onClick={() => openStockSearch("unsplash")}
-          className="rounded-md border px-3 py-2 text-sm hover:bg-accent/10"
-        >
-          {labels.searchUnsplash}
-        </button>
-        <button
-          type="button"
-          onClick={() => openStockSearch("pexels")}
-          className="rounded-md border px-3 py-2 text-sm hover:bg-accent/10"
-        >
-          {labels.searchPexels}
-        </button>
+        {!uploadOnly ? (
+          <button
+            type="button"
+            onClick={() => openStockSearch("unsplash")}
+            className="rounded-md border px-3 py-2 text-sm hover:bg-accent/10"
+          >
+            {labels.searchUnsplash}
+          </button>
+        ) : null}
+        {!uploadOnly ? (
+          <button
+            type="button"
+            onClick={() => openStockSearch("pexels")}
+            className="rounded-md border px-3 py-2 text-sm hover:bg-accent/10"
+          >
+            {labels.searchPexels}
+          </button>
+        ) : null}
       </div>
 
       <input
@@ -188,36 +204,40 @@ export function ItemImagePicker({
         onChange={onPickFile}
       />
 
-      <Input
-        aria-label={labels.inputPlaceholder}
-        value={imageUrl}
-        onChange={(event) => {
-          const rawValue = event.target.value;
-          const normalizedUrl = normalizeExternalImageUrl(rawValue);
-          setShowAdjustedNotice(Boolean(rawValue.trim()) && normalizedUrl !== rawValue.trim());
-          setImageUrl(normalizedUrl);
-          onImageUrlChange?.(normalizedUrl);
-          const issue = validateImageUrl(normalizedUrl);
-          if (issue === "invalid_url") {
-            setUrlValidationMessage(labels.invalidUrlHelp);
-          } else if (issue === "unsupported_page_url") {
-            setUrlValidationMessage(labels.unsupportedStockPageHelp);
-          } else {
-            setUrlValidationMessage("");
-          }
-        }}
-        placeholder={labels.inputPlaceholder}
-      />
+      {!uploadOnly ? (
+        <Input
+          aria-label={labels.inputPlaceholder}
+          value={imageUrl}
+          onChange={(event) => {
+            const rawValue = event.target.value;
+            const normalizedUrl = normalizeExternalImageUrl(rawValue);
+            setShowAdjustedNotice(Boolean(rawValue.trim()) && normalizedUrl !== rawValue.trim());
+            setImageUrl(normalizedUrl);
+            onImageUrlChange?.(normalizedUrl);
+            const issue = validateImageUrl(normalizedUrl);
+            if (issue === "invalid_url") {
+              setUrlValidationMessage(labels.invalidUrlHelp);
+            } else if (issue === "unsupported_page_url") {
+              setUrlValidationMessage(labels.unsupportedStockPageHelp);
+            } else {
+              setUrlValidationMessage("");
+            }
+          }}
+          placeholder={labels.inputPlaceholder}
+        />
+      ) : null}
 
-      {showAdjustedNotice ? (
+      {!uploadOnly && showAdjustedNotice ? (
         <p className="text-xs text-muted-foreground">{labels.unsplashAdjustedNotice}</p>
       ) : null}
 
-      <p className="text-xs text-muted-foreground">
+      {!uploadOnly ? (
+        <p className="text-xs text-muted-foreground">
         {labels.helper}
-      </p>
+        </p>
+      ) : null}
 
-      {urlValidationMessage ? (
+      {!uploadOnly && urlValidationMessage ? (
         <p className="text-xs text-amber-400">{urlValidationMessage}</p>
       ) : null}
 

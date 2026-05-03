@@ -63,7 +63,7 @@ export async function saveQrDesignAction(formData: FormData) {
     });
   }
 
-  revalidatePath(appRoutes.qr);
+  revalidatePath(appRoutes.items);
 }
 
 export async function renameQrDesignAction(formData: FormData) {
@@ -84,7 +84,7 @@ export async function renameQrDesignAction(formData: FormData) {
     where: { id: design.id },
     data: { name },
   });
-  revalidatePath(appRoutes.qr);
+  revalidatePath(appRoutes.items);
 }
 
 export async function deleteQrDesignAction(formData: FormData) {
@@ -103,6 +103,6 @@ export async function deleteQrDesignAction(formData: FormData) {
   await db.qrDesign.delete({
     where: { id: design.id },
   });
-  revalidatePath(appRoutes.qr);
+  revalidatePath(appRoutes.items);
 }
 

@@ -1,5 +1,10 @@
 # Pendientes de producto
 
+## Despliegue / dominio público
+
+- Menús en un único host (ej. lanzamiento `https://menuly.bocal.online/m/<slug>`): fijar `NEXT_PUBLIC_APP_URL` al host canónico de escaneo; si el apex comparte sufijo DNS con otros roots, usar `NEXT_PUBLIC_ROOT_DOMAINS` listando sufijos ordenados cualquiera (`parseHost` elige el **más largo** que coincida). Si el panel vive en otro origen, `NEXT_PUBLIC_PUBLIC_MENU_URL` para la URL codificada en el QR solamente.
+- Definir la URL definitiva de la landing de marketing y fijarla en producción como `NEXT_PUBLIC_MARKETING_SITE_URL` (enlace del icono Menuly en plantillas de menú QR). Hasta entonces se usa `NEXT_PUBLIC_APP_URL` o, si vacío, la ruta relativa `/`.
+
 ## Ajustes (fase siguiente, especifico Menuly)
 
 - Menu QR (Modern):

@@ -1,7 +1,7 @@
 import { requireTenantContext } from "@/lib/auth/guards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { appRoutes } from "@/lib/routes";
+import { appHref, appRoutes } from "@/lib/routes";
 import Link from "next/link";
 import { getAdminLocale, getAdminMessages } from "@/lib/admin/i18n";
 import { canUseAdvancedAnalytics, canUseAnalyticsCharts } from "@/config/plans";
@@ -111,8 +111,16 @@ export default async function DashboardPage() {
     },
     { label: t.checklist.atLeastOneMenu, done: menuCount > 0, href: appRoutes.items },
     { label: t.checklist.atLeastThreeItems, done: itemCount >= 3, href: appRoutes.items },
-    { label: t.checklist.templateSelected, done: Boolean(ctx.resource?.templateId), href: appRoutes.templates },
-    { label: t.checklist.qrDesignSaved, done: qrDesignCount > 0, href: appRoutes.qr },
+    {
+      label: t.checklist.templateSelected,
+      done: Boolean(ctx.resource?.templateId),
+      href: appHref("items", { tab: "style-editor" }),
+    },
+    {
+      label: t.checklist.qrDesignSaved,
+      done: qrDesignCount > 0,
+      href: appHref("items", { tab: "qr" }),
+    },
   ];
   const checklistDone = checklist.every((step) => step.done);
   const checklistHidden = await getDashboardChecklistHidden(ctx.user.id);

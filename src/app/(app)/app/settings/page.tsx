@@ -19,6 +19,7 @@ import { currencies } from "@/config/currencies";
 import { canUseMultiCurrency } from "@/config/plans";
 import { isTranslationLocaleConfigured } from "@/lib/translation/locales";
 import { readResourceAnalyticsSettings } from "@/lib/analytics/settings";
+import { getMenuQrBaseUrl } from "@/lib/menu-qr-public-url";
 
 type SettingsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -45,6 +46,10 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   });
   const userSettings = await getUserSettings(ctx.user.id);
   const analyticsSettings = readResourceAnalyticsSettings(ctx.resource?.socialJson);
+
+  const publicMenuHref = ctx.resource
+    ? `${getMenuQrBaseUrl()}/m/${encodeURIComponent(ctx.resource.slug)}`
+    : "";
 
   const notifInvites = userSettings.notifications.invites;
   const notifBilling = userSettings.notifications.billing;
@@ -85,7 +90,21 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               </div>
               <div className="space-y-2">
                 <Label>{resourceT.slug}</Label>
-                <Input name="slug" defaultValue={ctx.resource.slug} />
+                <Input name="slug" defaultValue={ctx.resource.slug} spellCheck={false} />
+                {publicMenuHref ? (
+                  <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    <div className="font-medium text-foreground">{resourceT.canonicalPublicMenuLink}</div>
+                    <a
+                      className="mt-1 block break-all text-primary underline underline-offset-2 hover:text-primary/90"
+                      href={publicMenuHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {publicMenuHref}
+                    </a>
+                    <p className="mt-2 leading-snug">{resourceT.canonicalPublicMenuLinkHint}</p>
+                  </div>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label>{resourceT.defaultLocale}</Label>

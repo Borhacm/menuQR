@@ -163,7 +163,6 @@ export function ItemFormAssistant({
     spicy: string;
     vegan: string;
     vegetarian: string;
-    glutenFree: string;
     livePreview: string;
     imagePreviewPlaceholder: string;
     imagePreviewFailed: string;
@@ -423,20 +422,20 @@ export function ItemFormAssistant({
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label>{labels.livePreview}</Label>
-        <div className="rounded-xl border bg-card p-3">
+        <div className="mx-auto w-full max-w-[360px] rounded-[22px] border bg-card p-3">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={imageAlt}
-              width={1280}
-              height={720}
+              width={960}
+              height={600}
               unoptimized
-              className="mb-3 aspect-video w-full rounded-lg object-cover"
+              className="mb-3 aspect-[16/10] w-full rounded-2xl object-cover"
               onError={() => setImagePreviewFailed(true)}
               onLoad={() => setImagePreviewFailed(false)}
             />
           ) : (
-            <div className="mb-3 flex aspect-video w-full items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
+            <div className="mb-3 flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-dashed text-xs text-muted-foreground">
               {labels.imagePreviewPlaceholder}
             </div>
           )}
@@ -445,14 +444,18 @@ export function ItemFormAssistant({
           ) : null}
           <div className="mt-1 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-base font-semibold">{name || labels.dishNameFallback}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-[1.04rem] font-semibold leading-tight">
+                {name || labels.dishNameFallback}
+              </p>
+              <p className="mt-1 text-[13.5px] text-muted-foreground">
                 {description || labels.dishDescriptionFallback}
               </p>
             </div>
-            <p className="shrink-0 text-lg font-bold text-primary">{previewPrice}</p>
+            <p className="shrink-0 rounded-full border px-2 py-0.5 text-[12px] font-semibold text-primary">
+              {previewPrice}
+            </p>
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+          <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
             {isFeatured ? <span className="rounded-full border px-2 py-0.5">{labels.featuredItem}</span> : null}
             {isVegan ? <span className="rounded-full border px-2 py-0.5">{labels.vegan}</span> : null}
             {isVegetarian ? <span className="rounded-full border px-2 py-0.5">{labels.vegetarian}</span> : null}
