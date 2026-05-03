@@ -69,9 +69,7 @@ export async function renderPublicMenuPage({
   }
   const qs = await searchParams;
 
-  let resource;
-  try {
-    resource = await db.resource.findUnique({
+  const resourceBase = await db.resource.findUnique({
     where: { slug },
     include: {
       organization: {
@@ -79,34 +77,34 @@ export async function renderPublicMenuPage({
           planId: true,
         },
       },
-      menus: {
+    },
+  });
+
+  if (!resourceBase) notFound();
+
+  const menus = await db.menu.findMany({
+    where: { resourceId: resourceBase.id },
+    orderBy: { position: "asc" },
+    include: {
+      categories: {
+        where: { isActive: true },
         orderBy: { position: "asc" },
         include: {
-          categories: {
+          items: {
             where: { isActive: true },
             orderBy: { position: "asc" },
             include: {
-              items: {
-                where: { isActive: true },
-                orderBy: { position: "asc" },
-                include: {
-                  prices: { orderBy: { position: "asc" } },
-                  images: { orderBy: { position: "asc" }, take: 1 },
-                  allergens: { include: { allergen: true } },
-                },
-              },
+              prices: { orderBy: { position: "asc" } },
+              images: { orderBy: { position: "asc" }, take: 1 },
+              allergens: { include: { allergen: true } },
             },
           },
         },
       },
     },
   });
-  } catch (error) {
-    console.error("[public-menu] prisma findUnique failed", { slug, message: String(error) });
-    throw error;
-  }
 
-  if (!resource) notFound();
+  const resource = { ...resourceBase, menus };
 
   const categories = resource.menus.flatMap((menuEntry) =>
     menuEntry.categories.map((category) => ({
