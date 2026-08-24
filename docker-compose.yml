@@ -4,9 +4,9 @@ services:
     container_name: menuly-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: menuly
-      POSTGRES_PASSWORD: menuly
-      POSTGRES_DB: menuly
+      POSTGRES_USER: ${POSTGRES_USER:-menuly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-menuly}
     ports:
       - "5433:5432"
     volumes:
