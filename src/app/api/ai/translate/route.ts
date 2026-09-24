@@ -3,13 +3,14 @@ import { createHash } from "node:crypto";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { getOpenAI } from "@/lib/ai/client";
+import { geminiGenerate, hasGeminiKey } from "@/lib/ai/gemini";
 import { appHref } from "@/lib/routes";
 import { resolveTenantMembership } from "@/lib/auth/tenant";
 import { getPlan } from "@/config/plans";
 import { getSecondaryTranslationLocales } from "@/lib/translation/locales";
 import { isTrustedRequestOrigin } from "@/lib/security/request-origin";
 
-type TranslateProvider = "auto" | "openai" | "libretranslate" | "suffix";
+type TranslateProvider = "auto" | "gemini" | "openai" | "libretranslate" | "suffix";
 
 const culinaryGlossary: Record<string, Record<string, string>> = {
   en: {
@@ -36,7 +37,7 @@ function redirectToTranslations(req: Request, status: string) {
 
 function getTranslateProvider(): TranslateProvider {
   const raw = (process.env.TRANSLATE_PROVIDER ?? "auto").trim().toLowerCase();
-  if (raw === "openai" || raw === "libretranslate" || raw === "suffix") return raw;
+  if (raw === "gemini" || raw === "openai" || raw === "libretranslate" || raw === "suffix") return raw;
   return "auto";
 }
 
@@ -145,6 +146,20 @@ async function translateWithLibreTranslate(text: string, locale: string) {
   throw lastError instanceof Error ? lastError : new Error("LibreTranslate request failed");
 }
 
+const TRANSLATOR_INSTRUCTIONS = [
+  "You are a professional restaurant menu localizer.",
+  "Translate from the source language into the requested target language naturally and idiomatically.",
+  "Use culinary vocabulary that sounds native, concise, and appetizing.",
+  "Preserve dish names/brand-like names when they are proper nouns.",
+  "Do not add explanations, notes, or extra punctuation.",
+  "Return only the translated text.",
+].join(" ");
+
+async function translateWithGemini(text: string, locale: string) {
+  const out = await geminiGenerate({ system: TRANSLATOR_INSTRUCTIONS, parts: [{ text: `Translate to ${locale}: ${text}` }] });
+  return out || text;
+}
+
 async function translateWithOpenAI(text: string, locale: string) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not configured");
@@ -179,6 +194,14 @@ async function translateText(text: string, locale: string) {
   if (provider === "suffix") {
     return postNormalizeCulinaryTranslation(`${text} (${locale.toUpperCase()})`, locale);
   }
+  if (provider === "gemini") {
+    try {
+      return postNormalizeCulinaryTranslation(await translateWithGemini(text, locale), locale);
+    } catch (geminiError) {
+      console.warn("[translate] Gemini failed:", geminiError);
+      throw new Error("Gemini translation failed");
+    }
+  }
   if (provider === "openai") {
     try {
       return postNormalizeCulinaryTranslation(await translateWithOpenAI(text, locale), locale);
@@ -201,7 +224,14 @@ async function translateText(text: string, locale: string) {
     }
   }
 
-  // AUTO mode: prefer OpenAI quality when available, then fallback to LibreTranslate.
+  // AUTO mode: Gemini (free tier) first, then OpenAI, then LibreTranslate.
+  if (hasGeminiKey()) {
+    try {
+      return postNormalizeCulinaryTranslation(await translateWithGemini(text, locale), locale);
+    } catch (geminiError) {
+      console.warn("[translate] Gemini unavailable in auto mode, trying next provider:", geminiError);
+    }
+  }
   if (process.env.OPENAI_API_KEY) {
     try {
       return postNormalizeCulinaryTranslation(await translateWithOpenAI(text, locale), locale);

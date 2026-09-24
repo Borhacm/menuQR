@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/ai/client";
+import { geminiGenerate, hasGeminiKey } from "@/lib/ai/gemini";
 import { auth } from "@/auth";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 import { logEvent, metricIncr } from "@/lib/observability";
@@ -37,6 +38,29 @@ export async function POST(req: Request) {
   }
   if (image.size > MAX_IMAGE_SIZE_BYTES) {
     return NextResponse.json({ error: "image too large (max 8MB)" }, { status: 400 });
+  }
+
+  const PARSE_INSTRUCTIONS =
+    "Extract the restaurant menu in this image into JSON with shape {categories:[{name,items:[{name,description,prices:number[]}]}]}. Keep the original language. Use numbers for prices, no currency symbols. Return only JSON.";
+
+  if (hasGeminiKey()) {
+    try {
+      const imageB64 = Buffer.from(await image.arrayBuffer()).toString("base64");
+      const text = await geminiGenerate({
+        model: process.env.GEMINI_VISION_MODEL?.trim() || "gemini-2.5-flash",
+        parts: [{ text: PARSE_INSTRUCTIONS }, { inline_data: { mime_type: image.type || "image/jpeg", data: imageB64 } }],
+        json: true,
+        temperature: 0,
+      });
+      metricIncr("ai_parse_success_total");
+      logEvent("info", "ai.parse.success", { userId: session.user.id, provider: "gemini", size: image.size });
+      return NextResponse.json(JSON.parse(text));
+    } catch (error) {
+      logEvent("warn", "ai.parse.gemini_failed", { message: error instanceof Error ? error.message : String(error) });
+      if (!process.env.OPENAI_API_KEY) {
+        return NextResponse.json({ error: "AI menu extraction failed, try another photo" }, { status: 502 });
+      }
+    }
   }
 
   if (!process.env.OPENAI_API_KEY) {
