@@ -1,6 +1,9 @@
 import QRCode from "qrcode";
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
+import { MIN_QR_CONTRAST, isHexColor, qrContrast } from "@/lib/qr/contrast";
+
+export { MIN_QR_CONTRAST, qrContrast };
 
 export type QrStyle = {
   dotsColor?: string;
@@ -12,7 +15,8 @@ export type QrStyle = {
 };
 
 const QR_SIZE = 800;
-const PADDING = 24;
+// Quiet zone: the QR spec asks for 4 modules around the code; scanners struggle with less.
+const QUIET_ZONE_MODULES = 4;
 const FINDER_CELLS = 7;
 const FINDER_MARGIN_CELLS = 1;
 
@@ -28,6 +32,26 @@ function toOptions(style?: QrStyle) {
   };
 }
 
+type DotStyle = "square" | "rounded" | "dots";
+type CornerStyle = "square" | "rounded" | "dot";
+
+/** Heart shapes were removed because scanners could not read them; old designs fall back to rounded. */
+export function normalizeDotStyle(value?: string): DotStyle {
+  return value === "rounded" || value === "dots" ? value : value === "heart" ? "rounded" : "square";
+}
+
+export function normalizeCornerStyle(value?: string): CornerStyle {
+  return value === "rounded" || value === "dot" ? value : value === "heart" ? "rounded" : "square";
+}
+
+/** Colors actually used: unreadable combinations (low contrast or inverted) fall back to black on white. */
+export function resolveQrColors(style?: QrStyle) {
+  const dark = isHexColor(style?.dotsColor) ? style!.dotsColor! : "#111111";
+  const light = isHexColor(style?.bgColor) ? style!.bgColor! : "#ffffff";
+  if (qrContrast(dark, light) < MIN_QR_CONTRAST) return { dark: "#111111", light: "#ffffff", corrected: true };
+  return { dark, light, corrected: false };
+}
+
 function isInFinderZone(row: number, col: number, size: number) {
   const zone = FINDER_CELLS + FINDER_MARGIN_CELLS;
   const topLeft = row < zone && col < zone;
@@ -40,7 +64,7 @@ function drawFinder(
   x: number,
   y: number,
   cell: number,
-  style: "square" | "rounded" | "dot" | "heart",
+  style: CornerStyle,
   dark: string,
   light: string
 ) {
@@ -62,23 +86,6 @@ function drawFinder(
     ].join("");
   }
 
-  if (style === "heart") {
-    const heartClassic = (cx: number, cy: number, size: number, fill: string) =>
-      `<path d="M ${cx} ${cy + size * 0.42}
-        C ${cx - size * 0.9} ${cy - size * 0.18}, ${cx - size * 0.95} ${cy - size * 0.95}, ${cx} ${cy - size * 0.52}
-        C ${cx + size * 0.95} ${cy - size * 0.95}, ${cx + size * 0.9} ${cy - size * 0.18}, ${cx} ${cy + size * 0.42} Z"
-        fill="${fill}" />`;
-    const cx = x + outer / 2;
-    const cy = y + outer / 2;
-    const innerHeartSize = inner * 0.65;
-    const innerHeartOffsetY = innerHeartSize * -0.06;
-    return [
-      `<circle cx="${cx}" cy="${cy}" r="${outer / 2}" fill="${dark}" />`,
-      `<circle cx="${cx}" cy="${cy}" r="${middle / 2}" fill="${light}" />`,
-      heartClassic(cx, cy + innerHeartOffsetY, innerHeartSize, dark),
-    ].join("");
-  }
-
   const rxOuter = style === "rounded" ? cell * 1.8 : 0;
   const rxMiddle = style === "rounded" ? cell * 1.2 : 0;
   const rxInner = style === "rounded" ? cell * 0.8 : 0;
@@ -90,16 +97,17 @@ function drawFinder(
 }
 
 async function renderStyledQrPng(url: string, style?: QrStyle) {
-  const dark = style?.dotsColor || "#111111";
-  const light = style?.bgColor || "#ffffff";
-  const dotStyle = (style?.dotStyle ?? "square") as "square" | "rounded" | "dots" | "heart";
-  const cornerStyle = (style?.cornerStyle ?? "square") as "square" | "rounded" | "dot" | "heart";
+  const { dark, light } = resolveQrColors(style);
+  const dotStyle = normalizeDotStyle(style?.dotStyle);
+  const cornerStyle = normalizeCornerStyle(style?.cornerStyle);
 
   const qr = QRCode.create(url, { errorCorrectionLevel: "H" });
   const size = qr.modules.size;
   const data = qr.modules.data;
-  const drawSize = QR_SIZE - PADDING * 2;
-  const cell = drawSize / size;
+  // Function patterns (timing, alignment, format/version info) keep square modules so scanners can lock on.
+  const reserved = (qr.modules as unknown as { reservedBit?: Uint8Array }).reservedBit;
+  const cell = QR_SIZE / (size + QUIET_ZONE_MODULES * 2);
+  const PADDING = QUIET_ZONE_MODULES * cell;
 
   const modules: string[] = [];
   for (let row = 0; row < size; row += 1) {
@@ -108,19 +116,12 @@ async function renderStyledQrPng(url: string, style?: QrStyle) {
       if (isInFinderZone(row, col, size)) continue;
       const x = PADDING + col * cell;
       const y = PADDING + row * cell;
-      if (dotStyle === "dots") {
+      const isFunctionModule = Boolean(reserved?.[row * size + col]);
+      if (isFunctionModule && dotStyle !== "square") {
+        modules.push(`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${cell * 0.18}" fill="${dark}" />`);
+      } else if (dotStyle === "dots") {
         modules.push(
-          `<circle cx="${x + cell / 2}" cy="${y + cell / 2}" r="${cell * 0.34}" fill="${dark}" />`
-        );
-      } else if (dotStyle === "heart") {
-        const cx = x + cell / 2;
-        const cy = y + cell / 2;
-        const s = cell * 0.55;
-        modules.push(
-          `<path d="M ${cx} ${cy + s * 0.42}
-            C ${cx - s * 0.9} ${cy - s * 0.18}, ${cx - s * 0.95} ${cy - s * 0.95}, ${cx} ${cy - s * 0.52}
-            C ${cx + s * 0.95} ${cy - s * 0.95}, ${cx + s * 0.9} ${cy - s * 0.18}, ${cx} ${cy + s * 0.42} Z"
-            fill="${dark}" />`
+          `<circle cx="${x + cell / 2}" cy="${y + cell / 2}" r="${cell * 0.47}" fill="${dark}" />`
         );
       } else if (dotStyle === "rounded") {
         modules.push(
@@ -180,6 +181,7 @@ export async function generateQrPngBuffer(url: string, style?: QrStyle) {
     const response = await fetch(resolvedLogoUrl);
     if (!response.ok) return withCorners;
     const rawLogo = Buffer.from(await response.arrayBuffer());
+    const { light } = resolveQrColors(style);
     const logoColor = style?.logoColor?.trim() || "#111111";
     const safeLogoColor = /^#([0-9a-fA-F]{6})$/.test(logoColor) ? logoColor : "#111111";
     const isPresetSvg = resolvedLogoUrl.includes("/qr-icons/") && resolvedLogoUrl.endsWith(".svg");
@@ -202,13 +204,13 @@ export async function generateQrPngBuffer(url: string, style?: QrStyle) {
         width: 220,
         height: 220,
         channels: 4,
-        background: style?.bgColor || "#ffffff",
+        background: light,
       },
     })
       .composite([
         {
           input: Buffer.from(
-            `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><rect x="0" y="0" width="220" height="220" rx="46" fill="${style?.bgColor || "#ffffff"}"/></svg>`
+            `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><rect x="0" y="0" width="220" height="220" rx="46" fill="${light}"/></svg>`
           ),
         },
       ])

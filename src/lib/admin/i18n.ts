@@ -136,6 +136,8 @@ export type AdminMessages = {
     title: string;
     designTitle: string;
     printTitle: string;
+    contrastWarning: string;
+    saveAsNew: string;
     printHint: string;
     printMenu: string;
     printTents: string;
@@ -488,6 +490,8 @@ const messages: Record<AdminLocale, AdminMessages> = {
       title: "QR Generator",
       designTitle: "Design your QR",
       printTitle: "Print",
+      contrastWarning: "Low contrast: phones may not scan it. Use dark dots on a light background. Until you fix it, the QR is generated in black on white.",
+      saveAsNew: "Save as new design",
       printHint: "A4 PDFs ready to print, using your latest saved QR design.",
       printMenu: "Printable menu (PDF)",
       printTents: "Table cards with QR (PDF, 4 per sheet)",
@@ -866,6 +870,8 @@ const messages: Record<AdminLocale, AdminMessages> = {
       title: "Generador QR",
       designTitle: "Diseña tu QR",
       printTitle: "Imprimir",
+      contrastWarning: "Contraste insuficiente: los móviles pueden no leerlo. Usa puntos oscuros sobre fondo claro. Mientras tanto, el QR se genera en negro sobre blanco.",
+      saveAsNew: "Guardar como diseño nuevo",
       printHint: "PDF en A4 listos para imprimir, con tu último diseño de QR guardado.",
       printMenu: "Carta imprimible (PDF)",
       printTents: "Cartelitos de mesa con QR (PDF, 4 por hoja)",

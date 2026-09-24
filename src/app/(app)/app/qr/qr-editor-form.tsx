@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { saveQrDesignAction } from "@/lib/admin/qr-actions";
 import { qrLogoPresets } from "@/config/qr-logo-presets";
+import { MIN_QR_CONTRAST, qrContrast } from "@/lib/qr/contrast";
 
 type QrEditorFormProps = {
   canBrandQr: boolean;
@@ -45,66 +46,52 @@ type QrEditorFormProps = {
     exportSvg: string;
     exportPdf: string;
     preview: string;
+    contrastWarning: string;
+    saveAsNew: string;
   };
 };
+
+function normalizeStyle(value: string, allowed: string[]) {
+  // Heart styles were removed (unscannable); saved designs using them render as rounded.
+  return allowed.includes(value) ? value : value === "heart" ? "rounded" : "square";
+}
 
 export function QrEditorForm({ canBrandQr, resourceId, designId, initial, labels }: QrEditorFormProps) {
   const [dotsColor, setDotsColor] = useState(initial.dotsColor);
   const [bgColor, setBgColor] = useState(initial.bgColor);
-  const [dotStyle, setDotStyle] = useState(initial.dotStyle);
-  const [cornerStyle, setCornerStyle] = useState(initial.cornerStyle);
+  const [dotStyle, setDotStyle] = useState(normalizeStyle(initial.dotStyle, ["square", "rounded", "dots"]));
+  const [cornerStyle, setCornerStyle] = useState(normalizeStyle(initial.cornerStyle, ["square", "rounded", "dot"]));
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl);
   const [logoColor, setLogoColor] = useState(initial.logoColor);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
-  const formRef = useRef<HTMLFormElement | null>(null);
-  const autoSaveButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isFirstRender = useRef(true);
+  const lowContrast = qrContrast(dotsColor, bgColor) < MIN_QR_CONTRAST;
 
-  useEffect(() => {
-    if (!canBrandQr) return;
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    const timeout = setTimeout(() => {
-      formRef.current?.requestSubmit(autoSaveButtonRef.current ?? undefined);
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [bgColor, canBrandQr, cornerStyle, dotStyle, dotsColor, logoColor, logoUrl]);
-
-  const previewSrc = useMemo(() => {
-    const params = new URLSearchParams({
-      resourceId,
-      format: "png",
-      dotsColor,
-      bgColor,
-      logoUrl,
-      logoColor,
-      dotStyle,
-      cornerStyle,
-    });
-    return `/api/qr/export?${params.toString()}`;
+  const currentQuery = useMemo(() => {
+    const params = new URLSearchParams({ resourceId, dotsColor, bgColor, logoUrl, logoColor, dotStyle, cornerStyle });
+    return params.toString();
   }, [bgColor, cornerStyle, dotStyle, dotsColor, logoColor, logoUrl, resourceId]);
 
-  const exportBase = useMemo(() => {
-    const params = new URLSearchParams({ resourceId });
-    if (designId) params.set("designId", designId);
-    return `/api/qr/export?${params.toString()}`;
-  }, [designId, resourceId]);
+  // Debounce the preview so dragging a color picker doesn't fire a request per pixel.
+  const [previewQuery, setPreviewQuery] = useState(currentQuery);
+  useEffect(() => {
+    const timeout = setTimeout(() => setPreviewQuery(currentQuery), 300);
+    return () => clearTimeout(timeout);
+  }, [currentQuery]);
+  const previewSrc = `/api/qr/export?${previewQuery}&format=png`;
+  // Exports always match what the preview shows, saved or not.
+  const exportBase = `/api/qr/export?${currentQuery}`;
 
   const cornerOptions = [
     { value: "square", label: labels.cornerStyleSquare, glyph: "■" },
     { value: "rounded", label: labels.cornerStyleRounded, glyph: "▢" },
     { value: "dot", label: labels.cornerStyleDot, glyph: "◉" },
-    { value: "heart", label: labels.cornerStyleHeart, glyph: "❤" },
   ];
 
   const dotOptions = [
     { value: "square", label: labels.dotStyleSquare, glyph: "⋮⋮" },
     { value: "rounded", label: labels.dotStyleRounded, glyph: "••" },
     { value: "dots", label: labels.dotStyleDots, glyph: "⋯" },
-    { value: "heart", label: labels.dotStyleHeart, glyph: "❤" },
   ];
 
   async function onPickLogo(event: ChangeEvent<HTMLInputElement>) {
@@ -126,24 +113,13 @@ export function QrEditorForm({ canBrandQr, resourceId, designId, initial, labels
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-      <form id="qr-editor-form" ref={formRef} action={saveQrDesignAction} className="space-y-4">
+      <form id="qr-editor-form" action={saveQrDesignAction} className="space-y-4">
         <input type="hidden" name="designId" value={designId ?? ""} />
-        <button
-          ref={autoSaveButtonRef}
-          type="submit"
-          name="saveMode"
-          value="update"
-          className="hidden"
-          title="Auto save"
-          aria-label="Auto save"
-          aria-hidden
-          tabIndex={-1}
-        />
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>{labels.cornerStyle}</Label>
             <input type="hidden" name="cornerStyle" value={cornerStyle} />
-            <div className="grid grid-cols-2 gap-2 rounded-lg border p-2 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-2 rounded-lg border p-2">
               {cornerOptions.map((option) => (
                 <button
                   key={option.value}
@@ -166,7 +142,7 @@ export function QrEditorForm({ canBrandQr, resourceId, designId, initial, labels
           <div className="space-y-2">
             <Label>{labels.dotStyle}</Label>
             <input type="hidden" name="dotStyle" value={dotStyle} />
-            <div className="grid grid-cols-2 gap-2 rounded-lg border p-2 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-2 rounded-lg border p-2">
               {dotOptions.map((option) => (
                 <button
                   key={option.value}
@@ -295,6 +271,11 @@ export function QrEditorForm({ canBrandQr, resourceId, designId, initial, labels
             </div>
           </div>
         </div>
+        {lowContrast ? (
+          <p role="alert" className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+            {labels.contrastWarning}
+          </p>
+        ) : null}
         {!canBrandQr ? <p className="text-xs text-muted-foreground">{labels.qrPaidOnly}</p> : null}
       </form>
 
@@ -321,15 +302,23 @@ export function QrEditorForm({ canBrandQr, resourceId, designId, initial, labels
               <a href={`${exportBase}&format=pdf`}>{labels.exportPdf}</a>
             </Button>
           </div>
-          <Button
-            type="submit"
-            form="qr-editor-form"
-            name="saveMode"
-            value="create"
-            disabled={!canBrandQr}
-          >
-            {labels.saveDesign}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" form="qr-editor-form" name="saveMode" value="update" disabled={!canBrandQr || lowContrast}>
+              {labels.saveDesign}
+            </Button>
+            {designId ? (
+              <Button
+                type="submit"
+                form="qr-editor-form"
+                name="saveMode"
+                value="create"
+                variant="outline"
+                disabled={!canBrandQr || lowContrast}
+              >
+                {labels.saveAsNew}
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

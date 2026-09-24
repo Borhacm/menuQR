@@ -1,4 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
+import sharp from "sharp";
+import jsQR from "jsqr";
 
 // Full restaurant journey: register, build a menu with two sections, translate,
 // export the QR and open the public menu as an anonymous guest.
@@ -9,6 +11,22 @@ const user = { name: "QA Menuly", email: `qa+${stamp}@example.com`, password: "Q
 const venue = { name: "Bar La Plaza QA", slug: `bar-qa-${stamp}` };
 
 test.describe.configure({ mode: "serial" });
+
+// QR styles offered by the editor; every combination must stay scannable.
+const dotStyles = ["square", "rounded", "dots"];
+const cornerStyles = ["square", "rounded", "dot"];
+const colors: Array<[string, string]> = [
+  ["#111111", "#ffffff"],
+  ["#6b5be2", "#ffffff"],
+  ["#111111", "#ffd400"],
+  ["#dddddd", "#ffffff"], // too low contrast: must fall back to black on white
+];
+
+async function decode(png: Buffer, size: number) {
+  const { data, info } = await sharp(png).resize(size, size).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return jsQR(new Uint8ClampedArray(data), info.width, info.height)?.data ?? null;
+}
+
 
 async function openTab(page: Page, tab: string) {
   await page.goto(`/app/items?tab=${tab}`);
@@ -223,5 +241,28 @@ test.describe("with an account", () => {
     await expect(menu.getByText(/14,50\s*€ · Primero, segundo y postre/)).toBeVisible();
     await expect(menu.getByText("Pulpo a la gallega")).toHaveCount(0);
     await guest.close();
+  });
+
+  test("all QR styles scan", async ({ page }) => {
+    await page.goto("/app/items?tab=qr");
+    const href = await page.locator('a[href*="/api/qr/export"][href*="format=png"]').first().getAttribute("href");
+    const resourceId = new URL(href!, "http://x").searchParams.get("resourceId")!;
+    const failures: string[] = [];
+    for (const dotStyle of dotStyles) {
+      for (const cornerStyle of cornerStyles) {
+        for (const [dotsColor, bgColor] of colors) {
+          for (const logoUrl of ["", "/qr-icons/coffee.svg"]) {
+            const qs = new URLSearchParams({ resourceId, format: "png", dotStyle, cornerStyle, dotsColor, bgColor, logoUrl });
+            const res = await page.request.get(`/api/qr/export?${qs}`);
+            const png = Buffer.from(await res.body());
+            for (const size of [240, 800]) {
+              const text = await decode(png, size);
+              if (!text || !text.includes("/m/")) failures.push(`${qs} @${size}`);
+            }
+          }
+        }
+      }
+    }
+    expect(failures).toEqual([]);
   });
 });

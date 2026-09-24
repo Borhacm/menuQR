@@ -93,6 +93,7 @@
     "@types/ua-parser-js": "^0.7.39",
     "eslint": "^9",
     "eslint-config-next": "^15.1.4",
+    "jsqr": "^1.4.0",
     "prisma": "^5.22.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",

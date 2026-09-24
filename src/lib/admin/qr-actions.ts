@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireTenantContext } from "@/lib/auth/guards";
 import { appRoutes } from "@/lib/routes";
 import { canUseQrBranding } from "@/config/plans";
+import { normalizeCornerStyle, normalizeDotStyle } from "@/lib/qr/generate";
 
 export async function saveQrDesignAction(formData: FormData) {
   const ctx = await requireTenantContext();
@@ -15,16 +16,15 @@ export async function saveQrDesignAction(formData: FormData) {
   const bgColor = String(formData.get("bgColor") ?? "").trim();
   const logoUrl = String(formData.get("logoUrl") ?? "").trim();
   const logoColor = String(formData.get("logoColor") ?? "").trim();
-  const dotStyle = String(formData.get("dotStyle") ?? "square").trim();
-  const cornerStyle = String(formData.get("cornerStyle") ?? "square").trim();
+  const dotStyle = normalizeDotStyle(String(formData.get("dotStyle") ?? "square").trim());
+  const cornerStyle = normalizeCornerStyle(String(formData.get("cornerStyle") ?? "square").trim());
 
   const canBrand = canUseQrBranding(ctx.organization.planId);
   const config = canBrand
     ? { dotsColor, bgColor, logoUrl, logoColor, dotStyle, cornerStyle }
     : { dotsColor, bgColor };
-  const shouldCreateNew =
-    String(formData.get("createNew") ?? "").trim().toLowerCase() === "1" ||
-    String(formData.get("createNew") ?? "").trim().toLowerCase() === "true";
+  // "Save" updates the active design; "Save as new design" (saveMode=create) adds another one.
+  const shouldCreateNew = String(formData.get("saveMode") ?? "").trim() === "create";
 
   if (shouldCreateNew) {
     await db.qrDesign.create({
