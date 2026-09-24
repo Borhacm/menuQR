@@ -129,6 +129,8 @@ export function ItemFormAssistant({
   allergensPaidOnlyLabel = "Allergen labels are available on paid plans.",
   upgradeHref = "/app/billing",
   upgradeLabel = "Upgrade to unlock",
+  canUsePhotos = true,
+  photosPaidOnlyLabel = "Dish photos are available on Starter and Pro.",
   labels,
   imagePickerLabels,
 }: {
@@ -142,6 +144,8 @@ export function ItemFormAssistant({
   allergensPaidOnlyLabel?: string;
   upgradeHref?: string;
   upgradeLabel?: string;
+  canUsePhotos?: boolean;
+  photosPaidOnlyLabel?: string;
   labels: {
     tagsAndAllergens: string;
     suggestedDescriptionSuffix: string;
@@ -417,8 +421,19 @@ export function ItemFormAssistant({
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label>{labels.imageUrl}</Label>
-        <ItemImagePicker name="imageUrl" dishName={name} onImageUrlChange={setImageUrl} labels={imagePickerLabels} />
-        <input type="hidden" name="imageAlt" value={imageAlt} />
+        {canUsePhotos ? (
+          <>
+            <ItemImagePicker name="imageUrl" dishName={name} onImageUrlChange={setImageUrl} labels={imagePickerLabels} />
+            <input type="hidden" name="imageAlt" value={imageAlt} />
+          </>
+        ) : (
+          <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+            {photosPaidOnlyLabel}{" "}
+            <Link href={upgradeHref} className="text-primary underline underline-offset-4">
+              {upgradeLabel}
+            </Link>
+          </p>
+        )}
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label>{labels.livePreview}</Label>

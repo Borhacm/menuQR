@@ -94,6 +94,7 @@ export type AdminMessages = {
     allergens: string;
     upgradeToUnlock: string;
     allergensPaidOnly: string;
+    photosPaidOnly: string;
     save: string;
     delete: string;
     deleteConfirm: string;
@@ -440,6 +441,7 @@ const messages: Record<AdminLocale, AdminMessages> = {
       allergens: "Allergens",
       upgradeToUnlock: "Upgrade to unlock",
       allergensPaidOnly: "Allergen labels are available on paid plans.",
+      photosPaidOnly: "Dish photos are available on Starter and Pro.",
       save: "Save product",
       delete: "Delete product",
       deleteConfirm: "Are you sure you want to delete this product?",
@@ -454,7 +456,7 @@ const messages: Record<AdminLocale, AdminMessages> = {
       empty: "No products yet.",
       photosTitle: "Photos",
       addPhoto: "Add photo",
-      maxPhotosReached: "Maximum of 5 photos reached for this product.",
+      maxPhotosReached: "You reached the photo limit of your plan for this product.",
       deletePhotoAria: "Delete photo",
       deletePhotoConfirm: "Are you sure you want to delete this photo?",
       morePhotosSuffix: "more",
@@ -812,6 +814,7 @@ const messages: Record<AdminLocale, AdminMessages> = {
       allergens: "Alérgenos",
       upgradeToUnlock: "Mejorar plan para desbloquear",
       allergensPaidOnly: "Las etiquetas de alérgenos están disponibles en planes de pago.",
+      photosPaidOnly: "Las fotos de platos están disponibles en Starter y Pro.",
       save: "Guardar producto",
       delete: "Borrar producto",
       deleteConfirm: "¿Seguro que quieres borrar este producto?",
@@ -826,7 +829,7 @@ const messages: Record<AdminLocale, AdminMessages> = {
       empty: "Aún no hay productos.",
       photosTitle: "Fotos",
       addPhoto: "Añadir foto",
-      maxPhotosReached: "Se alcanzó el máximo de 5 fotos para este producto.",
+      maxPhotosReached: "Has alcanzado el límite de fotos de tu plan para este producto.",
       deletePhotoAria: "Eliminar foto",
       deletePhotoConfirm: "¿Seguro que quieres eliminar esta foto?",
       morePhotosSuffix: "más",

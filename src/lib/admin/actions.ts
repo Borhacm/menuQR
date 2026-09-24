@@ -15,6 +15,7 @@ import {
   canUseQrBranding,
   canUseTemplates,
   hasAllergenFeature,
+  maxPhotosPerItem,
 } from "@/config/plans";
 import { inviteEmailHtml, sendEmail } from "@/lib/email";
 import { isTranslationLocaleConfigured } from "@/lib/translation/locales";
@@ -431,7 +432,7 @@ export async function createItemAction(formData: FormData) {
 
   const imageUrl = String(formData.get("imageUrl") ?? "").trim();
   const imageAlt = String(formData.get("imageAlt") ?? "").trim();
-  if (imageUrl) {
+  if (imageUrl && maxPhotosPerItem(ctx.organization.planId) > 0) {
     await db.itemImage.create({
       data: {
         itemId: item.id,
@@ -614,7 +615,7 @@ export async function appendItemImageAction(formData: FormData) {
   const photoCount = await db.itemImage.count({
     where: { itemId: ownedItem.id },
   });
-  if (photoCount >= 5) {
+  if (photoCount >= maxPhotosPerItem(ctx.organization.planId)) {
     redirect(itemsProductsScrollHref(ownedItem.id, { tab: "products", editItemId: ownedItem.id }));
   }
 

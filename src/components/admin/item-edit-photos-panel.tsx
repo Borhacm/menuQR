@@ -30,6 +30,7 @@ export type ItemEditPhotosPanelProps = {
   imageUrlFieldLabel: string;
   addPhotoLabel: string;
   maxPhotosReachedLabel: string;
+  maxPhotos: number;
   deletePhotoAria: string;
   deletePhotoConfirm: string;
   imagePickerLabels: StockPickerLabels;
@@ -53,13 +54,14 @@ export function ItemEditPhotosPanel({
   imageUrlFieldLabel,
   addPhotoLabel,
   maxPhotosReachedLabel,
+  maxPhotos,
   deletePhotoAria,
   deletePhotoConfirm,
   imagePickerLabels,
   deleteImageAction,
   appendImageAction,
 }: ItemEditPhotosPanelProps) {
-  const canAddPhoto = images.length < 5;
+  const canAddPhoto = images.length < maxPhotos;
   const appendFormId = `append-item-image-${itemId}`;
   return (
     <div className="space-y-3 border-t border-border pt-3">

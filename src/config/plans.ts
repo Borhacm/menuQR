@@ -43,8 +43,9 @@ export const plans: PlanDef[] = [
       "Launch-ready setup wizard",
       "1 subdomain with menu",
       "Up to 25 items per menu",
-      "1 photo per item",
-      "Single-language menu",
+      "Menu in 2 languages",
+      "Allergens (the 14 mandatory in the EU)",
+      "No dish photos",
       "Single currency pricing",
       "Classic template",
       "Basic QR export (PNG/SVG/PDF)",
@@ -52,13 +53,15 @@ export const plans: PlanDef[] = [
     ],
     limits: {
       maxItems: 25,
-      maxPhotosPerItem: 1,
+      // Free menus are text-only: no photo hosting.
+      maxPhotosPerItem: 0,
       maxLanguages: 2,
       maxManagerSeats: 1,
       aiPhotoParsing: "none",
       prioritySupport: false,
       noAds: true,
-      allergens: false,
+      // Allergen info is mandatory for restaurants in the EU (Reg. 1169/2011), so it is never paywalled.
+      allergens: true,
       templatesCount: 1,
       multiCurrency: false,
       analyticsCharts: false,
@@ -89,7 +92,6 @@ export const plans: PlanDef[] = [
       "Analytics charts and rankings",
       "Manual translation overrides",
       "Locale and currency selectors on menu",
-      "Allergen labels",
     ],
     limits: {
       maxItems: 150,
@@ -160,6 +162,10 @@ export function getPlan(id: string): PlanDef {
 
 export function hasAllergenFeature(planId: string): boolean {
   return getPlan(planId).limits.allergens;
+}
+
+export function maxPhotosPerItem(planId: string): number {
+  return getPlan(planId).limits.maxPhotosPerItem;
 }
 
 export function hasPaidPlan(planId: string): boolean {

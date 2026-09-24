@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 import { logEvent, metricIncr } from "@/lib/observability";
-import { getPublicUploadUrl } from "@/lib/media-cdn";
 import { isTrustedRequestOrigin } from "@/lib/security/request-origin";
-import { saveUpload } from "@/lib/upload-storage";
+import { saveUpload, UploadStorageUnavailableError } from "@/lib/upload-storage";
+import { resolveTenantMembership } from "@/lib/auth/tenant";
+import { canUseQrBranding, maxPhotosPerItem } from "@/config/plans";
 import sharp from "sharp";
 
 const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
@@ -93,11 +94,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid file signature" }, { status: 400 });
   }
   const isQrLogoUpload = purpose === "qr-logo";
+  // Hosting images is a paid feature: dish photos need a photo allowance, QR logos need QR branding.
+  const membership = await resolveTenantMembership(session.user.id);
+  const planId = membership?.organization.planId ?? "free";
+  const allowed = isQrLogoUpload ? canUseQrBranding(planId) : maxPhotosPerItem(planId) > 0;
+  if (!allowed) {
+    metricIncr("upload_plan_blocked_total");
+    return NextResponse.json({ error: "Image uploads are available on paid plans" }, { status: 403 });
+  }
   const storedBuffer = isQrLogoUpload ? await normalizeQrLogo(originalBuffer) : originalBuffer;
   const storedMime = isQrLogoUpload ? "image/png" : file.type;
   const ext = isQrLogoUpload ? "png" : MIME_EXT[file.type];
   const fileName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
-  await saveUpload(fileName, storedBuffer, storedMime);
+  let url: string;
+  try {
+    url = await saveUpload(fileName, storedBuffer, storedMime);
+  } catch (error) {
+    if (error instanceof UploadStorageUnavailableError) {
+      logEvent("error", "upload.storage_unavailable", { message: error.message });
+      return NextResponse.json({ error: "Image uploads are temporarily unavailable" }, { status: 503 });
+    }
+    throw error;
+  }
   metricIncr("upload_success_total");
   logEvent("info", "upload.success", {
     userId: session.user.id,
@@ -108,5 +126,5 @@ export async function POST(req: Request) {
     size: file.size,
   });
 
-  return NextResponse.json({ url: getPublicUploadUrl(fileName) });
+  return NextResponse.json({ url });
 }

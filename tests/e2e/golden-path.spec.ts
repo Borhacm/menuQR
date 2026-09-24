@@ -65,6 +65,22 @@ test.describe("with an account", () => {
     expect(options.join("|")).toContain("Principales");
   });
 
+  test("free plan: allergens available, dish photos not hosted", async ({ page, baseURL }) => {
+    await openTab(page, "products");
+    const form = productForm(page);
+    await expect(form.locator('input[name="allergens"]').first()).toBeEnabled();
+    await expect(form.getByText(/fotos de platos|dish photos/i)).toBeVisible();
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+      "base64"
+    );
+    const res = await page.request.post("/api/uploads", {
+      headers: { origin: baseURL ?? "" },
+      multipart: { file: { name: "plato.png", mimeType: "image/png", buffer: png }, purpose: "item" },
+    });
+    expect(res.status()).toBe(403);
+  });
+
   test("create dishes", async ({ page }) => {
     for (const [name, price, section] of [
       ["Croquetas de jamón", "8.50", "Entrantes"],

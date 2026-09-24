@@ -25,6 +25,7 @@ import {
   canUseTemplates,
   getPlan,
   hasAllergenFeature,
+  maxPhotosPerItem,
 } from "@/config/plans";
 import { loadMenuStylesData } from "@/lib/admin/load-menu-styles-data";
 import { MenuStyleEditorPanel, MenuStyleMobilePreviewPanel } from "@/components/admin/menu-styles-panels";
@@ -97,6 +98,7 @@ export default async function ItemsPage({
   const templatesT = m.templates;
   const qrT = m.qr;
   const canUseAllergens = hasAllergenFeature(ctx.organization.planId);
+  const maxPhotos = maxPhotosPerItem(ctx.organization.planId);
   const canUseMultipleCurrencies = canUseMultiCurrency(ctx.organization.planId);
   const allergens = await db.allergen.findMany({ orderBy: { name: "asc" } });
   const items = ctx.resource
@@ -489,6 +491,8 @@ export default async function ItemsPage({
                   allergensPaidOnlyLabel={t.allergensPaidOnly}
                   upgradeHref={appRoutes.billing}
                   upgradeLabel={t.upgradeToUnlock}
+                  canUsePhotos={maxPhotos > 0}
+                  photosPaidOnlyLabel={t.photosPaidOnly}
                   labels={m.itemForm}
                   imagePickerLabels={m.itemImagePicker}
                 />
@@ -612,8 +616,9 @@ export default async function ItemsPage({
                       </form>
                     </div>
                   </div>
-                  {editItemId === item.id ? (
+                  {editItemId === item.id && maxPhotos > 0 ? (
                     <ItemEditPhotosPanel
+                      maxPhotos={maxPhotos}
                       itemId={item.id}
                       itemName={item.name}
                       images={item.images.map(({ id: imageId, url, alt }) => ({

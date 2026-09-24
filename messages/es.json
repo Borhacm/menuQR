@@ -189,8 +189,9 @@
           "Asistente de configuración para lanzar rápido",
           "1 subdominio con menú",
           "Hasta 25 ítems por menú",
-          "1 foto por ítem",
-          "Menú en un solo idioma",
+          "Menú en 2 idiomas",
+          "Alérgenos (los 14 obligatorios en la UE)",
+          "Sin fotos de platos",
           "Precios en una sola moneda",
           "Plantilla Classic",
           "Exportación QR básica (PNG/SVG/PDF)",
@@ -212,8 +213,7 @@
           "QR con branding y diseños guardados",
           "Gráficos y rankings de analíticas",
           "Overrides manuales de traducción",
-          "Selector de idioma y moneda en el menú público",
-          "Etiquetas de alérgenos"
+          "Selector de idioma y moneda en el menú público"
         ]
       },
       "pro": {

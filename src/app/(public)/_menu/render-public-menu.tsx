@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { ClassicTemplate } from "@/components/menu-templates/classic";
 import { ModernTemplate } from "@/components/menu-templates/modern";
 import { GridTemplate } from "@/components/menu-templates/grid";
-import { canUseTemplates, hasAllergenFeature } from "@/config/plans";
+import { canUseTemplates, hasAllergenFeature, maxPhotosPerItem } from "@/config/plans";
 import { enableItemAnalyticsTracking } from "@/config/features";
 import { MenuTracker } from "@/components/analytics/menu-tracker";
 import { readResourceAnalyticsSettings } from "@/lib/analytics/settings";
@@ -141,6 +141,7 @@ export async function renderPublicMenuPage({
 
   const translatedTitle =
     translationMap.get(`RESOURCE:${resource.id}:name`) ?? resource.name;
+  const showPhotos = maxPhotosPerItem(resource.organization.planId) > 0;
   const translatedCategories = categories.map((category) => {
     const categoryName = translationMap.get(`CATEGORY:${category.id}:name`) ?? category.name;
     return {
@@ -149,6 +150,7 @@ export async function renderPublicMenuPage({
       description: category.description ?? null,
       items: category.items.map((item) => ({
       ...item,
+      images: showPhotos ? item.images : [],
       name: translationMap.get(`ITEM:${item.id}:name`) ?? item.name,
       description: translationMap.get(`ITEM:${item.id}:description`) ?? item.description,
     })),
