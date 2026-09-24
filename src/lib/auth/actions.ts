@@ -33,7 +33,7 @@ export async function registerAction(formData: FormData) {
 
   // The venue (organization + resource) is created in the onboarding wizard, where the owner picks
   // its name, menu address, source language and currency.
-  redirect("/onboarding");
+  redirect("/onboarding?new=1");
 }
 
 export async function loginAction(formData: FormData) {

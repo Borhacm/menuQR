@@ -6,6 +6,7 @@ import { registerAction } from "@/lib/auth/actions";
 import { Logo } from "@/components/marketing/logo";
 import { AuthLink } from "@/components/auth/auth-link";
 import { getAdminLocale } from "@/lib/admin/i18n";
+import { AnalyticsConsent } from "@/components/marketing/analytics-consent";
 
 const copy = {
   es: {
@@ -86,6 +87,7 @@ export default async function RegisterPage({
           </p>
         </CardContent>
       </Card>
+      <AnalyticsConsent locale={locale === "es" ? "es" : "en"} />
     </main>
   );
 }

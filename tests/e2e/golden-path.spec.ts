@@ -26,6 +26,11 @@ test("register goes through the venue wizard", async ({ page }) => {
   await page.fill('input[name="password"]', user.password);
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/onboarding/, { timeout: 20_000 });
+  await expect
+    .poll(() => page.evaluate(() => JSON.stringify((window as unknown as { dataLayer?: unknown[] }).dataLayer ?? [])))
+    .toContain("sign_up");
+  const banner = page.getByRole("button", { name: /solo esenciales|essential only/i });
+  if (await banner.isVisible()) await banner.click();
 
   await page.fill('input[name="name"]', venue.name);
   await page.fill('input[name="slug"]', venue.slug);

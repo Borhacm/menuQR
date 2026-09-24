@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { redirectToAuth } from "@/lib/auth/redirects";
 import { completeOnboardingAction } from "@/lib/auth/actions";
 import { getAdminLocale } from "@/lib/admin/i18n";
+import { AnalyticsConsent } from "@/components/marketing/analytics-consent";
 import { menuLocales } from "@/config/locales";
 import { currencies } from "@/config/currencies";
 import { getMenuQrBaseUrl } from "@/lib/menu-qr-public-url";
@@ -86,7 +87,7 @@ export default async function OnboardingPage({
               {errorMessage}
             </p>
           ) : null}
-          <form action={completeOnboardingAction} className="space-y-5">
+          <form action={completeOnboardingAction} data-analytics-submit="onboarding_complete" className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name">{t.name}</Label>
               <Input id="name" name="name" placeholder={t.namePlaceholder} required />
@@ -125,6 +126,7 @@ export default async function OnboardingPage({
           </form>
         </CardContent>
       </Card>
+      <AnalyticsConsent locale={lang} />
     </main>
   );
 }

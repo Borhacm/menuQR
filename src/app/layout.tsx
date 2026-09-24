@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/config/brand";
@@ -7,7 +7,8 @@ import { resolveAbsoluteSiteOrigin } from "@/lib/utils";
 import { cookies } from "next/headers";
 import { getLocale } from "next-intl/server";
 
-const geistSans = Geist({
+// Same type system as bocal.online: Inter for text, Bricolage Grotesque for headings.
+const geistSans = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const display = Plus_Jakarta_Sans({
+const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],

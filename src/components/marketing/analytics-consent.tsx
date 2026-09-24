@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
  * El consentimiento se comparte con bocal.online y sus subdominios: cookie `bocalma_consent` en
  * .bocal.online (misma lógica que Bocalma-V0/lib/cookie-consent.ts). Con el consentimiento denegado,
  * GA solo recibe mediciones sin cookies (Consent Mode v2). `?internal=on` marca el tráfico propio.
+ *
+ * Embudo: cta_click (enlaces a /register o con data-analytics-cta), sign_up (/onboarding?new=1) y
+ * onboarding_complete (formularios con data-analytics-submit). También se carga en /register y
+ * /onboarding, que son páginas del embudo, no del panel.
  */
 
 const GA_ID = "G-X1TPZH5MKQ";
@@ -54,9 +58,54 @@ declare global {
   }
 }
 
+/** Sends a GA event once gtag is ready (the bootstrap script loads after hydration). */
+function track(name: string, params: Record<string, unknown> = {}) {
+  let tries = 0;
+  const send = () => {
+    if (window.gtag) {
+      window.gtag("event", name, params);
+    } else if (tries++ < 50) {
+      window.setTimeout(send, 100);
+    }
+  };
+  send();
+}
+
 export function AnalyticsConsent({ locale }: { locale: string }) {
   const [open, setOpen] = useState(false);
   const t = locale === "es" ? COPY.es : COPY.en;
+
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.("a");
+      if (!link) return;
+      const ctaId = link.getAttribute("data-analytics-cta");
+      const href = link.getAttribute("href") ?? "";
+      if (ctaId) {
+        track("cta_click", { cta_id: ctaId, page_path: window.location.pathname });
+      } else if (/\/register(\?|$)/.test(href)) {
+        const plan = new URL(href, window.location.origin).searchParams.get("plan") ?? undefined;
+        track("cta_click", { cta_id: "register", plan, page_path: window.location.pathname });
+      }
+    };
+    const onSubmit = (event: SubmitEvent) => {
+      const name = (event.target as HTMLFormElement | null)?.getAttribute?.("data-analytics-submit");
+      if (name) track(name);
+    };
+    document.addEventListener("click", onClick);
+    document.addEventListener("submit", onSubmit);
+
+    const url = new URL(window.location.href);
+    if (url.pathname === "/onboarding" && url.searchParams.get("new") === "1") {
+      track("sign_up", { method: "email" });
+      url.searchParams.delete("new");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+    return () => {
+      document.removeEventListener("click", onClick);
+      document.removeEventListener("submit", onSubmit);
+    };
+  }, []);
 
   useEffect(() => {
     setOpen(readConsent() === null);
