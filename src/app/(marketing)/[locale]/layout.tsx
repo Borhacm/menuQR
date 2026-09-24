@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { MarketingHeader } from "@/components/marketing/header";
 import { MarketingFooter } from "@/components/marketing/footer";
+import { AnalyticsConsent } from "@/components/marketing/analytics-consent";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -32,6 +33,7 @@ export default async function MarketingLayout({
         <main className="flex-1">{children}</main>
         <MarketingFooter />
       </div>
+      <AnalyticsConsent locale={locale} />
     </NextIntlClientProvider>
   );
 }

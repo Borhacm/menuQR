@@ -1,4 +1,5 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { CookieSettingsButton } from "@/components/marketing/analytics-consent";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./logo";
 import { brand } from "@/config/brand";
@@ -6,6 +7,7 @@ import { Mail, MapPin } from "lucide-react";
 
 export function MarketingFooter() {
   const t = useTranslations("Footer");
+  const locale = useLocale();
   const tNav = useTranslations("Nav");
 
   return (
@@ -74,6 +76,7 @@ export function MarketingFooter() {
           <div className="flex gap-4">
             <Link href="/legal/privacy" className="hover:text-foreground">{t("privacy")}</Link>
             <Link href="/legal/terms" className="hover:text-foreground">{t("terms")}</Link>
+            <CookieSettingsButton label={locale === "es" ? "Preferencias de cookies" : "Cookie settings"} />
           </div>
         </div>
       </div>
