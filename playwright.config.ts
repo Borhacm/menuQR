@@ -5,8 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
+    // Optional: reuse an already-downloaded Chromium build instead of `npx playwright install`.
+    launchOptions: process.env.PW_EXE ? { executablePath: process.env.PW_EXE } : {},
   },
   projects: [
     {
@@ -16,7 +18,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://127.0.0.1:3000",
+    url: process.env.E2E_BASE_URL ?? "http://localhost:3000",
     reuseExistingServer: true,
     timeout: 120_000,
   },

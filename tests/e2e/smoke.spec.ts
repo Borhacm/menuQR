@@ -9,8 +9,9 @@ test("landing renders and links to auth", async ({ page }) => {
   await expect(page).toHaveURL(/\/register$/, { timeout: 15000 });
 });
 
-test("ai parse endpoint requires auth", async ({ request }) => {
+test("ai parse endpoint requires auth", async ({ request, baseURL }) => {
   const res = await request.post("/api/ai/parse-menu", {
+    headers: { origin: baseURL ?? "" },
     multipart: {
       image: {
         name: "x.jpg",
@@ -27,7 +28,7 @@ test("qr export endpoint requires auth", async ({ request }) => {
   expect(res.status()).toBe(401);
 });
 
-test("track endpoint validates payload", async ({ request }) => {
-  const res = await request.post("/api/track", { data: {} });
+test("track endpoint validates payload", async ({ request, baseURL }) => {
+  const res = await request.post("/api/track", { data: {}, headers: { origin: baseURL ?? "" } });
   expect(res.status()).toBe(400);
 });
