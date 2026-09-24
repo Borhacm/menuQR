@@ -41,6 +41,7 @@ import { ItemEditPhotosPanel } from "@/components/admin/item-edit-photos-panel";
 import { ItemsFeedbackToasts } from "@/components/admin/items-feedback-toasts";
 import { ItemsListScrollAnchor } from "@/components/admin/items-list-scroll-anchor";
 import { cn } from "@/lib/utils";
+import { ensureMenuSectionCategories } from "@/lib/admin/menu-sections";
 
 export default async function ItemsPage({
   searchParams,
@@ -87,6 +88,7 @@ export default async function ItemsPage({
         ? params.categoryId[0]
         : params?.categoryId;
   const ctx = await requireTenantContext();
+  if (ctx.resource) await ensureMenuSectionCategories(ctx.resource.id);
   const locale = await getAdminLocale();
   const m = getAdminMessages(locale);
   const t = m.items;

@@ -5,52 +5,24 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { auth, signIn } from "@/auth";
+import { menuLocales } from "@/config/locales";
+import { currencies } from "@/config/currencies";
 
 export async function registerAction(formData: FormData) {
-  const name = String(formData.get("name") ?? "");
-  const email = String(formData.get("email") ?? "").toLowerCase();
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!name || !email || password.length < 8) {
-    throw new Error("Invalid registration payload");
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8) {
+    redirect("/register?error=invalid");
   }
 
   const existing = await db.user.findUnique({ where: { email } });
-  if (existing) throw new Error("Email already in use");
+  if (existing) redirect("/register?error=email_taken");
 
   const passwordHash = await hash(password, 10);
-  const user = await db.user.create({
+  await db.user.create({
     data: { name, email, passwordHash },
-  });
-
-  const baseSlug = slugify(name) || "restaurant";
-  let orgSlug = baseSlug;
-  let i = 1;
-  while (await db.organization.findUnique({ where: { slug: orgSlug } })) {
-    orgSlug = `${baseSlug}-${i++}`;
-  }
-
-  const organization = await db.organization.create({
-    data: {
-      name: `${name} Restaurant`,
-      slug: orgSlug,
-      memberships: {
-        create: {
-          userId: user.id,
-          role: "OWNER",
-        },
-      },
-    },
-  });
-
-  await db.resource.create({
-    data: {
-      organizationId: organization.id,
-      slug: orgSlug,
-      name: `${name} Restaurant`,
-      enabledLocales: ["en", "es"],
-      enabledCurrencies: ["EUR", "USD"],
-    },
   });
 
   await signIn("credentials", {
@@ -59,7 +31,9 @@ export async function registerAction(formData: FormData) {
     redirect: false,
   });
 
-  redirect("/app");
+  // The venue (organization + resource) is created in the onboarding wizard, where the owner picks
+  // its name, menu address, source language and currency.
+  redirect("/onboarding");
 }
 
 export async function loginAction(formData: FormData) {
@@ -73,33 +47,44 @@ export async function loginAction(formData: FormData) {
   });
 }
 
+async function isSlugTaken(slug: string) {
+  const [org, resource] = await Promise.all([
+    db.organization.findUnique({ where: { slug }, select: { id: true } }),
+    db.resource.findUnique({ where: { slug }, select: { id: true } }),
+  ]);
+  return Boolean(org || resource);
+}
+
 export async function completeOnboardingAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const slugInput = String(formData.get("slug") ?? "").trim();
-  const defaultLocale = String(formData.get("defaultLocale") ?? "en").trim();
-  const defaultCurrency = String(formData.get("defaultCurrency") ?? "EUR").trim().toUpperCase();
+  const requestedLocale = String(formData.get("defaultLocale") ?? "es").trim().toLowerCase();
+  const requestedCurrency = String(formData.get("defaultCurrency") ?? "EUR").trim().toUpperCase();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
+  if (!name) redirect("/onboarding?error=name_required");
 
-  const existingMembership = await db.membership.findFirst({
-    where: { userId },
-    include: { organization: { include: { resources: true } } },
-  });
+  const existingMembership = await db.membership.findFirst({ where: { userId } });
   if (existingMembership) {
     redirect("/app");
   }
 
+  const defaultLocale = menuLocales.some((l) => l.code === requestedLocale) ? requestedLocale : "es";
+  const defaultCurrency = currencies.some((c) => c.code === requestedCurrency) ? requestedCurrency : "EUR";
+  // Source language first, plus English (or Spanish for English menus) as a ready-to-translate second language.
+  const secondLocale = defaultLocale === "en" ? "es" : "en";
+
   const baseSlug = slugify(slugInput || name) || "restaurant";
   let orgSlug = baseSlug;
   let i = 1;
-  while (await db.organization.findUnique({ where: { slug: orgSlug } })) {
+  while (await isSlugTaken(orgSlug)) {
     orgSlug = `${baseSlug}-${i++}`;
   }
 
-  const org = await db.organization.create({
+  await db.organization.create({
     data: {
-      name: name || "My Restaurant",
+      name,
       slug: orgSlug,
       memberships: {
         create: {
@@ -107,18 +92,16 @@ export async function completeOnboardingAction(formData: FormData) {
           role: "OWNER",
         },
       },
-    },
-  });
-
-  await db.resource.create({
-    data: {
-      organizationId: org.id,
-      slug: orgSlug,
-      name: name || "My Restaurant",
-      defaultLocale,
-      defaultCurrency,
-      enabledLocales: Array.from(new Set([defaultLocale, "en", "es"])),
-      enabledCurrencies: [defaultCurrency],
+      resources: {
+        create: {
+          slug: orgSlug,
+          name,
+          defaultLocale,
+          defaultCurrency,
+          enabledLocales: [defaultLocale, secondLocale],
+          enabledCurrencies: [defaultCurrency],
+        },
+      },
     },
   });
 

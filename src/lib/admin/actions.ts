@@ -174,10 +174,13 @@ export async function createMenuAction(formData: FormData) {
       resourceId: ctx.resource.id,
       name,
       position: count,
+      // Dishes attach to a Category, so every section needs one from the start.
+      categories: { create: { name, position: 0 } },
     },
   });
 
   revalidatePath(appRoutes.menus);
+  revalidatePath(appRoutes.items);
 }
 
 export async function updateMenuAction(formData: FormData) {
@@ -189,15 +192,23 @@ export async function updateMenuAction(formData: FormData) {
 
   const owned = await db.menu.findFirst({
     where: { id: menuId, resourceId: ctx.resource.id },
-    select: { id: true },
+    select: { id: true, name: true },
   });
   if (!owned) return;
 
-  await db.menu.update({
-    where: { id: owned.id },
-    data: { name },
-  });
+  await db.$transaction([
+    db.menu.update({
+      where: { id: owned.id },
+      data: { name },
+    }),
+    // Keep the section's own category (same name) in sync so the public menu shows the new name.
+    db.category.updateMany({
+      where: { menuId: owned.id, name: owned.name },
+      data: { name },
+    }),
+  ]);
   revalidatePath(appRoutes.menus);
+  revalidatePath(appRoutes.items);
 }
 
 export async function moveMenuAction(formData: FormData) {
