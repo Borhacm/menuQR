@@ -21,7 +21,7 @@ export async function generateMetadata({
   const tagline = localizedTagline[locale];
   if (!tagline) return {};
   const title = `${brand.name}: ${tagline}`;
-  return { title: { default: title, template: `%s · ${brand.name}` }, openGraph: { title } };
+  return { title: { absolute: title, template: `%s · ${brand.name}` }, openGraph: { title } };
 }
 
 export function generateStaticParams() {
