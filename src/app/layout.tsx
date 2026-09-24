@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/config/brand";
 import { resolveAbsoluteSiteOrigin } from "@/lib/utils";
 import { cookies } from "next/headers";
+import { getLocale } from "next-intl/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,13 +25,13 @@ const display = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: `${brand.name} — ${brand.tagline}`,
+    default: `${brand.name}: ${brand.tagline}`,
     template: `%s · ${brand.name}`,
   },
   description: brand.description,
   metadataBase: resolveAbsoluteSiteOrigin(),
   openGraph: {
-    title: `${brand.name} — ${brand.tagline}`,
+    title: `${brand.name}: ${brand.tagline}`,
     description: brand.description,
     type: "website",
   },
@@ -41,9 +42,10 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const theme = cookieStore.get("APP_THEME")?.value === "light" ? "light" : "dark";
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${theme === "dark" ? "dark" : ""} h-full antialiased`}
     >

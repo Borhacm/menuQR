@@ -40,6 +40,13 @@ export async function POST(req: Request) {
   }
 
   if (!process.env.OPENAI_API_KEY) {
+    if (process.env.NODE_ENV === "production") {
+      metricIncr("ai_parse_unavailable_total");
+      return NextResponse.json(
+        { error: "AI menu extraction is not available right now" },
+        { status: 503 }
+      );
+    }
     metricIncr("ai_parse_mock_total");
     return NextResponse.json({
       categories: [

@@ -132,7 +132,7 @@ export function AdminPreview() {
               </span>
               <div className="ml-2 flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border/60 bg-background/90 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm sm:text-xs">
                 <Lock className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden />
-                <span className="truncate font-mono tabular-nums">app.menuly.app</span>
+                <span className="truncate font-mono tabular-nums">menuly.bocal.online/app</span>
               </div>
             </div>
 
@@ -159,10 +159,6 @@ export function AdminPreview() {
               ) : null}
             </div>
           </div>
-
-          <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
-            {t("mediaFootnote")}
-          </p>
         </motion.div>
       </div>
     </section>

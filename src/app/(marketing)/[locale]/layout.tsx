@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { brand } from "@/config/brand";
 import { NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -5,6 +7,22 @@ import { routing } from "@/i18n/routing";
 import { MarketingHeader } from "@/components/marketing/header";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { AnalyticsConsent } from "@/components/marketing/analytics-consent";
+
+const localizedTagline: Record<string, string> = {
+  es: "Menús QR multilingües para restaurantes",
+};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const tagline = localizedTagline[locale];
+  if (!tagline) return {};
+  const title = `${brand.name}: ${tagline}`;
+  return { title: { default: title, template: `%s · ${brand.name}` }, openGraph: { title } };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

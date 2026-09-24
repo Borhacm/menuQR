@@ -16,7 +16,8 @@ export function slugify(input: string): string {
 }
 
 /** Default when env is unset; avoid invalid URLs that break `metadataBase` (500 on every route). */
-const DEFAULT_SITE_URL = "http://localhost:3000";
+const DEFAULT_SITE_URL =
+  process.env.NODE_ENV === "production" ? "https://menuly.bocal.online" : "http://localhost:3000";
 
 /** Absolute origin for URLs and metadataBase; falls back safely on empty or malformed env. */
 export function resolveAbsoluteSiteOrigin(): URL {

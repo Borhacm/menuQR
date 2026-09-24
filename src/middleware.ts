@@ -56,6 +56,7 @@ export default function middleware(req: NextRequest) {
     url.pathname.startsWith("/verify") ||
     url.pathname.startsWith("/invite") ||
     url.pathname.startsWith("/onboarding") ||
+    url.pathname.startsWith("/legal") ||
     url.pathname.startsWith("/m/") ||
     url.pathname.startsWith("/_menu/") ||
     url.pathname.startsWith("/api");

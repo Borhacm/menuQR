@@ -17,7 +17,7 @@
     "subtitle": "Digitaliza y crea tu menú en minutos. Personaliza cómo lo ven tus clientes y recibe análisis en tiempo real de lo que más les interesa.",
     "ctaPrimary": "Empezar gratis",
     "ctaSecondary": "Ver planes",
-    "trustedBy": "Cientos de restaurantes en todo el mundo confían en nosotros",
+    "trustedBy": "Gratis para empezar, sin tarjeta",
     "preview": {
       "badgeLanguages": "25+ idiomas",
       "badgeScans": "Escaneos ilimitados",
@@ -152,8 +152,7 @@
     "ctaOpenPanel": "Abrir el panel",
     "noteAuth": "Requiere acceso",
     "gifAlt": "Vista del panel de administración de Menuly",
-    "customBadge": "Tu demo",
-    "mediaFootnote": "La captura principal es public/images/marketing/admin-panel.png (actualízala con la app en marcha: npm run capture:admin-previews y ADMIN_CAPTURE_BASE_URL si no es localhost:3005). Opcional: admin-navigation.gif, .png o .webp en la misma carpeta marketing para un clip encima del panel."
+    "customBadge": "Tu demo"
   },
   "Steps": {
     "eyebrow": "Implementación guiada",
@@ -253,7 +252,7 @@
       },
       {
         "q": "¿Puedo usar mi propio subdominio?",
-        "a": "Sí. Elige un slug único bajo nuestros dominios cortos (p. ej. 'cafe.menuly.app') para una dirección elegante y fácil de recordar."
+        "a": "Sí. Elige un slug único para tu local (p. ej. 'menuly.bocal.online/m/cafe') para una dirección fácil de recordar."
       },
       {
         "q": "¿Soportan menús multilingües?",
@@ -301,6 +300,8 @@
     "privacy": "Política de privacidad",
     "terms": "Términos de servicio",
     "legal": "Legal",
+    "byBocalma": "Una herramienta de",
+    "contact": "Contacto",
     "solutionLinks": {
       "personalizedDomain": "Dominio personalizado",
       "multilingualMenu": "Menú multilingüe",
@@ -318,23 +319,12 @@
   },
   "ContactsPage": {
     "title": "Ponte en contacto",
-    "subtitle": "¿Dudas sobre planes, integraciones o migrar tu menú? Estaremos encantados de ayudarte.",
-    "contact": {
-      "email": "Email",
-      "address": "Dirección",
-      "phone": "Teléfono"
-    },
-    "form": {
-      "name": "Nombre",
-      "email": "Email",
-      "subject": "Asunto",
-      "message": "Mensaje",
-      "send": "Enviar mensaje"
-    }
+    "subtitle": "¿Dudas sobre planes o quieres ayuda para digitalizar tu carta? Menuly es una herramienta de Bocalma: escríbenos desde su formulario de contacto.",
+    "cta": "Ir al formulario de contacto"
   },
   "SolutionsPage": {
     "title": "Todo lo que necesitas para lanzar un menú digital",
-    "subtitle": "Ocho funciones enfocadas que trabajan juntas para impulsar miles de menús de restaurantes en todo el mundo.",
+    "subtitle": "Ocho funciones enfocadas que trabajan juntas para que tu carta digital funcione desde el primer día.",
     "items": {
       "domain": { "title": "Dominio personalizado para menú QR", "hero": "Un subdominio corto y memorable para tu restaurante" },
       "management": { "title": "Gestión sencilla de menú online", "hero": "Crea y actualiza tu menú en minutos, no en horas" },

@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { resolveAbsoluteSiteOrigin } from "@/lib/utils";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", allow: "/" }],
-    sitemap: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/sitemap.xml`,
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/app", "/api/", "/onboarding", "/invite/"] }],
+    sitemap: `${resolveAbsoluteSiteOrigin().origin}/sitemap.xml`,
   };
 }

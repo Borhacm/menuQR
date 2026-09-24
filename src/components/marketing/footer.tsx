@@ -3,7 +3,7 @@ import { CookieSettingsButton } from "@/components/marketing/analytics-consent";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./logo";
 import { brand } from "@/config/brand";
-import { Mail, MapPin } from "lucide-react";
+import { Mail } from "lucide-react";
 
 export function MarketingFooter() {
   const t = useTranslations("Footer");
@@ -19,14 +19,16 @@ export function MarketingFooter() {
             {t("description")}
           </p>
           <div className="space-y-1.5 text-sm text-muted-foreground">
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{brand.address}</span>
-            </div>
+            <p>
+              {t("byBocalma")}{" "}
+              <a href={brand.parentUrl} className="font-medium text-foreground hover:underline">
+                Bocalma
+              </a>
+            </p>
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              <a href={`mailto:${brand.email}`} className="hover:text-foreground">
-                {brand.email}
+              <a href={brand.contactUrl(locale)} className="hover:text-foreground">
+                {t("contact")}
               </a>
             </div>
           </div>
@@ -40,7 +42,6 @@ export function MarketingFooter() {
             <li><Link href="/solutions" className="hover:text-foreground">{tNav("solutions")}</Link></li>
             <li><Link href="/faq" className="hover:text-foreground">{tNav("faq")}</Link></li>
             <li><Link href="/contacts" className="hover:text-foreground">{tNav("contacts")}</Link></li>
-            <li><Link href="/blog" className="hover:text-foreground">{tNav("blog")}</Link></li>
           </ul>
         </div>
 

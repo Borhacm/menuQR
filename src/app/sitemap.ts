@@ -8,16 +8,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/pricing",
     "/faq",
     "/contacts",
-    "/blog",
     "/solutions",
-    "/login",
-    "/register",
-    "/legal",
-    "/legal/privacy",
-    "/legal/terms",
   ];
-  return routes.flatMap((route) => [
-    { url: `${base}/en${route}`, lastModified: new Date() },
-    { url: `${base}/es${route}`, lastModified: new Date() },
-  ]);
+  const unlocalizedRoutes = ["/register", "/legal", "/legal/privacy", "/legal/terms"];
+  const now = new Date();
+  return [
+    ...routes.flatMap((route) => [
+      { url: `${base}${route || "/"}`, lastModified: now },
+      { url: `${base}/es${route}`, lastModified: now },
+    ]),
+    ...unlocalizedRoutes.map((route) => ({ url: `${base}${route}`, lastModified: now })),
+  ];
 }

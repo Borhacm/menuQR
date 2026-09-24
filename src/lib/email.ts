@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { brand } from "@/config/brand";
 
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.RESEND_FROM ?? `${brand.name} <onboarding@menuly.test>`;
+const from = process.env.RESEND_FROM ?? `${brand.name} <onboarding@bocal.online>`;
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
