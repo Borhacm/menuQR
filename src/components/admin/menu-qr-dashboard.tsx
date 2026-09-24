@@ -29,6 +29,26 @@ export function MenuQrDashboard(opts: {
     <div className="space-y-4">
       <Card>
         <CardHeader>
+          <CardTitle>{t.printTitle}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t.printHint}</p>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <a
+            href={`/api/menu/print?resourceId=${encodeURIComponent(resourceId)}&kind=menu`}
+            className="inline-flex h-9 items-center rounded-md border border-input px-3 text-sm font-medium hover:bg-accent/20"
+          >
+            {t.printMenu}
+          </a>
+          <a
+            href={`/api/menu/print?resourceId=${encodeURIComponent(resourceId)}&kind=tents`}
+            className="inline-flex h-9 items-center rounded-md border border-input px-3 text-sm font-medium hover:bg-accent/20"
+          >
+            {t.printTents}
+          </a>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle>{t.designTitle}</CardTitle>
         </CardHeader>
         <CardContent>

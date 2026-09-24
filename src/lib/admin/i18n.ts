@@ -135,6 +135,10 @@ export type AdminMessages = {
     tabLabel: string;
     title: string;
     designTitle: string;
+    printTitle: string;
+    printHint: string;
+    printMenu: string;
+    printTents: string;
     preview: string;
     dotsColor: string;
     backgroundColor: string;
@@ -483,6 +487,10 @@ const messages: Record<AdminLocale, AdminMessages> = {
       tabLabel: "QR",
       title: "QR Generator",
       designTitle: "Design your QR",
+      printTitle: "Print",
+      printHint: "A4 PDFs ready to print, using your latest saved QR design.",
+      printMenu: "Printable menu (PDF)",
+      printTents: "Table cards with QR (PDF, 4 per sheet)",
       preview: "Live preview",
       dotsColor: "Dots color",
       backgroundColor: "Background color",
@@ -857,6 +865,10 @@ const messages: Record<AdminLocale, AdminMessages> = {
       tabLabel: "QR",
       title: "Generador QR",
       designTitle: "Diseña tu QR",
+      printTitle: "Imprimir",
+      printHint: "PDF en A4 listos para imprimir, con tu último diseño de QR guardado.",
+      printMenu: "Carta imprimible (PDF)",
+      printTents: "Cartelitos de mesa con QR (PDF, 4 por hoja)",
       preview: "Vista previa en vivo",
       dotsColor: "Color de puntos",
       backgroundColor: "Color de fondo",

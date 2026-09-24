@@ -120,6 +120,21 @@ test.describe("with an account", () => {
     }
   });
 
+  test("printable menu and table cards download as PDF", async ({ page }) => {
+    await openTab(page, "qr");
+    const links = await page.locator('a[href*="/api/menu/print"]').evaluateAll((els) =>
+      els.map((el) => el.getAttribute("href") ?? "")
+    );
+    expect(links).toHaveLength(2);
+    for (const href of links) {
+      const res = await page.request.get(href);
+      expect(res.status(), href).toBe(200);
+      expect(res.headers()["content-type"]).toBe("application/pdf");
+      const body = await res.body();
+      expect(body.subarray(0, 4).toString()).toBe("%PDF");
+    }
+  });
+
   test("public menu renders for an anonymous guest on mobile", async ({ page, browser }) => {
     const slug = venue.slug;
     const guest = await browser.newContext({ storageState: undefined, viewport: { width: 390, height: 844 } });
