@@ -8,6 +8,8 @@ import {
   createItemAction,
   deleteItemImageAction,
   deleteMenuAction,
+  updateSectionSettingsAction,
+  toggleItemSoldOutAction,
   deleteItemAction,
   markTranslationDraftAction,
   moveMenuAction,
@@ -43,6 +45,7 @@ import { ItemsFeedbackToasts } from "@/components/admin/items-feedback-toasts";
 import { ItemsListScrollAnchor } from "@/components/admin/items-list-scroll-anchor";
 import { cn } from "@/lib/utils";
 import { ensureMenuSectionCategories } from "@/lib/admin/menu-sections";
+import { readSectionSettings, readSoldOutToday } from "@/lib/venue/venue-info";
 
 export default async function ItemsPage({
   searchParams,
@@ -99,6 +102,8 @@ export default async function ItemsPage({
   const qrT = m.qr;
   const canUseAllergens = hasAllergenFeature(ctx.organization.planId);
   const maxPhotos = maxPhotosPerItem(ctx.organization.planId);
+  const soldOutToday = readSoldOutToday(ctx.resource?.socialJson);
+  const sectionSettings = readSectionSettings(ctx.resource?.socialJson);
   const canUseMultipleCurrencies = canUseMultiCurrency(ctx.organization.planId);
   const allergens = await db.allergen.findMany({ orderBy: { name: "asc" } });
   const items = ctx.resource
@@ -456,6 +461,60 @@ export default async function ItemsPage({
                       />
                     </form>
                   </div>
+                  {(() => {
+                    const settings = sectionSettings[menu.id];
+                    const configured = Boolean(settings && (settings.days.length || settings.from || settings.fixedPrice || settings.note));
+                    const es = locale === "es";
+                    const dayNames = es ? ["L", "M", "X", "J", "V", "S", "D"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                    return (
+                      <details className="mt-2 rounded-md border border-dashed px-3 py-2" open={configured}>
+                        <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                          {es ? "Horario y precio cerrado (menú del día)" : "Schedule and fixed price (set menu)"}
+                        </summary>
+                        <form action={updateSectionSettingsAction} className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <input type="hidden" name="menuId" value={menu.id} />
+                          <fieldset className="sm:col-span-2">
+                            <legend className="mb-1 text-xs text-muted-foreground">
+                              {es ? "Días visibles (ninguno marcado = todos)" : "Visible days (none checked = every day)"}
+                            </legend>
+                            <div className="flex flex-wrap gap-3">
+                              {dayNames.map((label, index) => (
+                                <label key={label} className="flex items-center gap-1 text-sm">
+                                  <input type="checkbox" name="days" value={index + 1} defaultChecked={settings?.days.includes(index + 1)} />
+                                  {label}
+                                </label>
+                              ))}
+                            </div>
+                          </fieldset>
+                          <label className="space-y-1 text-xs text-muted-foreground">
+                            {es ? "Desde" : "From"}
+                            <Input type="time" name="from" defaultValue={settings?.from ?? ""} />
+                          </label>
+                          <label className="space-y-1 text-xs text-muted-foreground">
+                            {es ? "Hasta" : "Until"}
+                            <Input type="time" name="to" defaultValue={settings?.to ?? ""} />
+                          </label>
+                          <label className="space-y-1 text-xs text-muted-foreground">
+                            {es ? "Precio cerrado (opcional)" : "Fixed price (optional)"}
+                            <Input name="fixedPrice" inputMode="decimal" placeholder="14,50" defaultValue={settings?.fixedPrice ?? ""} />
+                          </label>
+                          <label className="space-y-1 text-xs text-muted-foreground">
+                            {es ? "Qué incluye (opcional)" : "What's included (optional)"}
+                            <Input
+                              name="note"
+                              placeholder={es ? "Primero, segundo, postre, pan y bebida" : "Starter, main, dessert and drink"}
+                              defaultValue={settings?.note ?? ""}
+                            />
+                          </label>
+                          <div className="sm:col-span-2">
+                            <Button type="submit" size="sm" variant="outline">
+                              {es ? "Guardar horario" : "Save schedule"}
+                            </Button>
+                          </div>
+                        </form>
+                      </details>
+                    );
+                  })()}
                 </div>
               ))}
               {!menus.length ? <p className="text-muted-foreground">{menusT.empty}</p> : null}
@@ -604,6 +663,20 @@ export default async function ItemsPage({
                           </Link>
                         </Button>
                       )}
+                      <form action={toggleItemSoldOutAction} className="inline">
+                        <input type="hidden" name="itemId" value={item.id} />
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant={soldOutToday.has(item.id) ? "default" : "outline"}
+                          aria-pressed={soldOutToday.has(item.id)}
+                          title={locale === "es" ? "Se reactiva solo mañana" : "Resets automatically tomorrow"}
+                        >
+                          {soldOutToday.has(item.id)
+                            ? locale === "es" ? "Agotado hoy ✓" : "Sold out today ✓"
+                            : locale === "es" ? "Marcar agotado" : "Mark sold out"}
+                        </Button>
+                      </form>
                       <form action={deleteItemAction} className="inline">
                         <input type="hidden" name="itemId" value={item.id} />
                         <ActionSubmitButton

@@ -12,6 +12,8 @@ export type MenuItem = {
   isVegan?: boolean;
   isVegetarian?: boolean;
   isSpicy?: boolean;
+  /** Localized "sold out" label when the dish is sold out today; absent otherwise. */
+  soldOut?: string | null;
   images?: { id: string; url: string; alt: string | null }[];
   allergens?: { allergen: { id: string; code?: string; name: string; icon: string | null } }[];
   prices: ReadonlyArray<MenuPrice>;

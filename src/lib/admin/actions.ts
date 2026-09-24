@@ -7,6 +7,12 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireTenantContext } from "@/lib/auth/guards";
 import { slugify } from "@/lib/utils";
+import {
+  mergeSocialJson,
+  normalizeSectionSettings,
+  readSectionSettings,
+  toggleSoldOutToday,
+} from "@/lib/venue/venue-info";
 import { appRoutes } from "@/lib/routes";
 import { appHref, teamInviteStatus } from "@/lib/routes";
 import {
@@ -1225,4 +1231,46 @@ export async function acceptAllTranslationsAction(formData: FormData) {
 
   revalidatePath(appRoutes.items);
   revalidatePath(appRoutes.translations);
+}
+
+export async function toggleItemSoldOutAction(formData: FormData) {
+  const ctx = await requireTenantContext();
+  if (!ctx.resource) return;
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  if (!itemId) return;
+  const owned = await db.item.findFirst({
+    where: { id: itemId, category: { menu: { resourceId: ctx.resource.id } } },
+    select: { id: true },
+  });
+  if (!owned) return;
+  const resource = await db.resource.findUnique({ where: { id: ctx.resource.id }, select: { socialJson: true } });
+  await db.resource.update({
+    where: { id: ctx.resource.id },
+    data: { socialJson: toggleSoldOutToday(resource?.socialJson, owned.id) as Prisma.InputJsonValue },
+  });
+  revalidatePath(appRoutes.items);
+}
+
+export async function updateSectionSettingsAction(formData: FormData) {
+  const ctx = await requireTenantContext();
+  if (!ctx.resource) return;
+  const menuId = String(formData.get("menuId") ?? "").trim();
+  const owned = menuId
+    ? await db.menu.findFirst({ where: { id: menuId, resourceId: ctx.resource.id }, select: { id: true } })
+    : null;
+  if (!owned) return;
+  const settings = normalizeSectionSettings({
+    days: formData.getAll("days").map(Number),
+    from: String(formData.get("from") ?? ""),
+    to: String(formData.get("to") ?? ""),
+    fixedPrice: String(formData.get("fixedPrice") ?? ""),
+    note: String(formData.get("note") ?? ""),
+  });
+  const resource = await db.resource.findUnique({ where: { id: ctx.resource.id }, select: { socialJson: true } });
+  const sections = { ...readSectionSettings(resource?.socialJson), [owned.id]: settings };
+  await db.resource.update({
+    where: { id: ctx.resource.id },
+    data: { socialJson: mergeSocialJson(resource?.socialJson, "sections", sections) as Prisma.InputJsonValue },
+  });
+  revalidatePath(appRoutes.items);
 }

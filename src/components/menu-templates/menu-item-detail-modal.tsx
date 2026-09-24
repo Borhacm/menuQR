@@ -1,5 +1,6 @@
 "use client";
 
+import { SoldOutBadge } from "@/components/menu-templates/sold-out-badge";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
@@ -449,6 +450,7 @@ export function MenuItemDetailModal({
               }
             >
               {item.name}
+              <SoldOutBadge label={item.soldOut} />
             </h3>
           </div>
           <button type="button" onClick={onClose} aria-label={labels.close} className={closeBtnClass}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { SoldOutBadge } from "@/components/menu-templates/sold-out-badge";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type CSSProperties } from "react";
@@ -176,6 +177,7 @@ function ClassicDishRow({
         <div className="flex items-baseline justify-between gap-3">
           <p className="min-w-0 text-[15px] font-medium leading-snug sm:text-base">
             <span>{item.name}</span>
+            <SoldOutBadge label={item.soldOut} />
             {item.isFeatured && showFeaturedMark ? (
               <span
                 className="ml-1.5 text-[11px] font-normal text-muted-foreground"
@@ -403,7 +405,7 @@ export function ClassicTemplate({
                 {category.name}
               </h2>
               {category.description ? (
-                <p className="text-sm font-normal leading-snug text-muted-foreground/90">{category.description}</p>
+                <p className="whitespace-pre-line text-sm font-normal leading-snug text-muted-foreground/90">{category.description}</p>
               ) : null}
             </div>
 

@@ -4,6 +4,16 @@ import { ClassicTemplate } from "@/components/menu-templates/classic";
 import { ModernTemplate } from "@/components/menu-templates/modern";
 import { GridTemplate } from "@/components/menu-templates/grid";
 import { canUseTemplates, hasAllergenFeature, maxPhotosPerItem } from "@/config/plans";
+import { VenueInfoCard } from "@/components/menu-templates/venue-info-card";
+import { MenuSearch } from "@/components/menu-templates/menu-search";
+import {
+  describeSectionSchedule,
+  isSectionOpen,
+  readSectionSettings,
+  readSoldOutToday,
+  readVenueInfo,
+} from "@/lib/venue/venue-info";
+import { formatPrice } from "@/config/currencies";
 import { enableItemAnalyticsTracking } from "@/config/features";
 import { MenuTracker } from "@/components/analytics/menu-tracker";
 import { readResourceAnalyticsSettings } from "@/lib/analytics/settings";
@@ -142,15 +152,33 @@ export async function renderPublicMenuPage({
   const translatedTitle =
     translationMap.get(`RESOURCE:${resource.id}:name`) ?? resource.name;
   const showPhotos = maxPhotosPerItem(resource.organization.planId) > 0;
-  const translatedCategories = categories.map((category) => {
+  const soldOutToday = readSoldOutToday(resource.socialJson);
+  const soldOutLabel = locale === "es" ? "Agotado" : "Sold out";
+  const sectionSettings = readSectionSettings(resource.socialJson);
+  const visibleCategories = categories.filter((category) => {
+    const settings = sectionSettings[category.__menuId];
+    return !settings || isSectionOpen(settings);
+  });
+  const translatedCategories = visibleCategories.map((category) => {
     const categoryName = translationMap.get(`CATEGORY:${category.id}:name`) ?? category.name;
+    const settings = sectionSettings[category.__menuId];
+    const sectionDetails = settings
+      ? [
+          settings.fixedPrice ? formatPrice(Number(settings.fixedPrice), resource.defaultCurrency, locale) : "",
+          settings.note,
+          describeSectionSchedule(settings, locale),
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : "";
     return {
       id: category.id,
       name: categoryName,
-      description: category.description ?? null,
+      description: [category.description, sectionDetails].filter(Boolean).join("\n") || null,
       items: category.items.map((item) => ({
       ...item,
       images: showPhotos ? item.images : [],
+      soldOut: soldOutToday.has(item.id) ? soldOutLabel : null,
       name: translationMap.get(`ITEM:${item.id}:name`) ?? item.name,
       description: translationMap.get(`ITEM:${item.id}:description`) ?? item.description,
     })),
@@ -179,43 +207,50 @@ export async function renderPublicMenuPage({
             ? "Información de alérgenos visible en etiquetas. Ante alergias severas, confirma con el personal."
             : "Allergen information is shown with labels. For severe allergies, confirm with staff."}
         </p>
-        {resource.contactPhone ? <p>{locale === "es" ? "Contacto" : "Contact"}: {resource.contactPhone}</p> : null}
       </section>
-      {template === "modern" ? (
-        <ModernTemplate
-          title={translatedTitle}
-          categories={translatedCategories}
-          locale={locale}
-          locales={locales}
-          theme={theme}
-          canShowAllergens={canShowAllergens}
-          initialCurrency={resolvedInitialCurrency}
-          analytics={{
-            resourceId: resource.id,
-            enableItemTracking: analyticsSettings.itemTrackingEnabled || enableItemAnalyticsTracking,
-          }}
-        />
-      ) : template === "grid" ? (
-        <GridTemplate
-          title={translatedTitle}
-          categories={translatedCategories}
-          locale={locale}
-          locales={locales}
-          theme={theme}
-          canShowAllergens={canShowAllergens}
-          initialCurrency={resolvedInitialCurrency}
-        />
-      ) : (
-        <ClassicTemplate
-          title={translatedTitle}
-          categories={translatedCategories}
-          locale={locale}
-          locales={locales}
-          theme={theme}
-          canShowAllergens={canShowAllergens}
-          initialCurrency={resolvedInitialCurrency}
-        />
-      )}
+      <MenuSearch categories={translatedCategories} locale={locale} currency={resolvedInitialCurrency}>
+        {template === "modern" ? (
+          <ModernTemplate
+            title={translatedTitle}
+            categories={translatedCategories}
+            locale={locale}
+            locales={locales}
+            theme={theme}
+            canShowAllergens={canShowAllergens}
+            initialCurrency={resolvedInitialCurrency}
+            analytics={{
+              resourceId: resource.id,
+              enableItemTracking: analyticsSettings.itemTrackingEnabled || enableItemAnalyticsTracking,
+            }}
+          />
+        ) : template === "grid" ? (
+          <GridTemplate
+            title={translatedTitle}
+            categories={translatedCategories}
+            locale={locale}
+            locales={locales}
+            theme={theme}
+            canShowAllergens={canShowAllergens}
+            initialCurrency={resolvedInitialCurrency}
+          />
+        ) : (
+          <ClassicTemplate
+            title={translatedTitle}
+            categories={translatedCategories}
+            locale={locale}
+            locales={locales}
+            theme={theme}
+            canShowAllergens={canShowAllergens}
+            initialCurrency={resolvedInitialCurrency}
+          />
+        )}
+      </MenuSearch>
+      <VenueInfoCard
+        venue={readVenueInfo(resource.socialJson)}
+        phone={resource.contactPhone}
+        address={resource.contactAddress}
+        locale={locale}
+      />
     </main>
   );
 }

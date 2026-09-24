@@ -1,5 +1,6 @@
 "use client";
 
+import { SoldOutBadge } from "@/components/menu-templates/sold-out-badge";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Flame, Leaf, Sprout, X } from "lucide-react";
@@ -352,7 +353,7 @@ export function GridTemplate({
                     className="mb-2 aspect-[16/10] w-full rounded-lg object-cover"
                     sizes="(max-width: 640px) 200px, 240px"
                   />
-                  <p className="line-clamp-1 text-base font-semibold text-white">{item.name}</p>
+                  <p className="line-clamp-1 text-base font-semibold text-white">{item.name}<SoldOutBadge label={item.soldOut} /></p>
                   <p className="mt-1 text-sm font-semibold text-cyan-200">
                     {selectedPrice ? formatPrice(Number(selectedPrice.amount), selectedPrice.currency, locale) : "-"}
                   </p>
@@ -455,6 +456,9 @@ export function GridTemplate({
       </section>
 
       <section className="space-y-2 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+        {activeCategory?.description ? (
+          <p className="whitespace-pre-line px-1 text-sm text-slate-300">{activeCategory.description}</p>
+        ) : null}
         {visibleItems.length > 0 ? (
           <div className="grid gap-2 sm:grid-cols-2">
             {visibleItems.map((item) => {
@@ -472,7 +476,7 @@ export function GridTemplate({
                     className="mb-2 aspect-video w-full rounded-xl object-cover"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
-                  <h2 className="text-lg font-semibold leading-tight text-white">{item.name}</h2>
+                  <h2 className="text-lg font-semibold leading-tight text-white">{item.name}<SoldOutBadge label={item.soldOut} /></h2>
                   {item.description ? (
                     <p className="mt-1 text-sm font-medium leading-snug text-slate-100/90">{item.description}</p>
                   ) : null}

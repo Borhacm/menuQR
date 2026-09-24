@@ -6,7 +6,9 @@ import {
   updateAccountEmailAction,
   updateNotificationsAction,
   updateResourceAnalyticsAction,
+  updateVenueInfoAction,
 } from "@/lib/admin/settings-actions";
+import { readVenueInfo } from "@/lib/venue/venue-info";
 import { updateResourceAction } from "@/lib/admin/resource-actions";
 import { getUserSettings } from "@/lib/admin/user-settings";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,37 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   });
   const userSettings = await getUserSettings(ctx.user.id);
   const analyticsSettings = readResourceAnalyticsSettings(ctx.resource?.socialJson);
+  const venue = readVenueInfo(ctx.resource?.socialJson);
+  const venueT =
+    locale === "es"
+      ? {
+          title: "Ficha del local",
+          intro: "Se muestra al final de tu carta pública. Deja vacío lo que no quieras enseñar.",
+          phone: "Teléfono",
+          address: "Dirección",
+          hours: "Horario",
+          hoursPlaceholder: "L-V 8:00-16:00\nS-D 9:00-23:00",
+          whatsapp: "WhatsApp",
+          reviews: "Enlace a reseñas (Google, TripAdvisor…)",
+          instagram: "Instagram",
+          wifiName: "Wifi: nombre de la red",
+          wifiPassword: "Wifi: contraseña",
+          save: "Guardar ficha",
+        }
+      : {
+          title: "Venue details",
+          intro: "Shown at the end of your public menu. Leave empty anything you don't want to show.",
+          phone: "Phone",
+          address: "Address",
+          hours: "Opening hours",
+          hoursPlaceholder: "Mon-Fri 8:00-16:00\nSat-Sun 9:00-23:00",
+          whatsapp: "WhatsApp",
+          reviews: "Reviews link (Google, TripAdvisor…)",
+          instagram: "Instagram",
+          wifiName: "Wifi network name",
+          wifiPassword: "Wifi password",
+          save: "Save details",
+        };
 
   const publicMenuHref = ctx.resource
     ? `${getMenuQrBaseUrl()}/m/${encodeURIComponent(ctx.resource.slug)}`
@@ -188,6 +221,61 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           )}
         </CardContent>
       </Card>
+
+      {ctx.resource ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{venueT.title}</CardTitle>
+            <p className="text-sm text-muted-foreground">{venueT.intro}</p>
+          </CardHeader>
+          <CardContent>
+            <form action={updateVenueInfoAction} className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contactPhone">{venueT.phone}</Label>
+                <Input id="contactPhone" name="contactPhone" type="tel" defaultValue={ctx.resource.contactPhone ?? ""} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">{venueT.whatsapp}</Label>
+                <Input id="whatsapp" name="whatsapp" type="tel" defaultValue={venue.whatsapp} placeholder="+34 600 000 000" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="contactAddress">{venueT.address}</Label>
+                <Input id="contactAddress" name="contactAddress" defaultValue={ctx.resource.contactAddress ?? ""} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="hours">{venueT.hours}</Label>
+                <textarea
+                  id="hours"
+                  name="hours"
+                  rows={3}
+                  defaultValue={venue.hours}
+                  placeholder={venueT.hoursPlaceholder}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reviewsUrl">{venueT.reviews}</Label>
+                <Input id="reviewsUrl" name="reviewsUrl" type="url" defaultValue={venue.reviewsUrl} placeholder="https://" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagram">{venueT.instagram}</Label>
+                <Input id="instagram" name="instagram" defaultValue={venue.instagram} placeholder="@tulocal" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="wifiName">{venueT.wifiName}</Label>
+                <Input id="wifiName" name="wifiName" defaultValue={venue.wifiName} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="wifiPassword">{venueT.wifiPassword}</Label>
+                <Input id="wifiPassword" name="wifiPassword" defaultValue={venue.wifiPassword} />
+              </div>
+              <div className="md:col-span-2">
+                <Button type="submit">{venueT.save}</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

@@ -1,5 +1,6 @@
 "use client";
 
+import { SoldOutBadge } from "@/components/menu-templates/sold-out-badge";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -508,6 +509,7 @@ export function QrMenuTemplate({
                     <div className="flex min-h-[2.25rem] items-center justify-between gap-2">
                       <span className="line-clamp-1 text-[1.14rem] font-semibold leading-[1.15] tracking-[-0.008em]">
                         {item.name}
+                        <SoldOutBadge label={item.soldOut} />
                       </span>
                       <span className="shrink-0 rounded-full border border-border/80 bg-card/60 px-2.5 py-1 text-[12px] font-semibold leading-none text-muted-foreground">
                         {selectedPrice
@@ -531,6 +533,9 @@ export function QrMenuTemplate({
 
         <section className="pb-20">
           <div className="mb-2" role="status" aria-live="polite" />
+          {activeCategory?.description ? (
+            <p className="mb-3 whitespace-pre-line text-sm text-muted-foreground">{activeCategory.description}</p>
+          ) : null}
 
           <div className="space-y-2.5 sm:space-y-3">
             {visibleItems.length > 0 ? (
@@ -571,6 +576,7 @@ export function QrMenuTemplate({
                   <div className="flex items-start gap-3">
                     <h3 className="text-[1.22rem] font-semibold leading-[1.2] tracking-[-0.004em] sm:text-[1.28rem]">
                       {item.name}
+                      <SoldOutBadge label={item.soldOut} />
                     </h3>
                   </div>
                   {item.description ? (

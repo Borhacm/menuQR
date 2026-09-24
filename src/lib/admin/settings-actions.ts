@@ -10,6 +10,7 @@ import { hideDashboardChecklist, saveUserSettings } from "@/lib/admin/user-setti
 import { requireTenantContext } from "@/lib/auth/guards";
 import { emailChangeConfirmationHtml, sendEmail } from "@/lib/email";
 import { defaultResourceAnalyticsSettings } from "@/lib/analytics/settings";
+import { mergeSocialJson } from "@/lib/venue/venue-info";
 
 function toSettingsPath(params: Record<string, string>) {
   const qs = new URLSearchParams(params);
@@ -207,4 +208,29 @@ export async function updateResourceAnalyticsAction(formData: FormData) {
     data: { socialJson: socialJson as Prisma.InputJsonValue },
   });
   redirect(toSettingsPath({ saved: "analytics" }));
+}
+
+export async function updateVenueInfoAction(formData: FormData) {
+  const ctx = await requireTenantContext();
+  if (!ctx.resource) {
+    redirect(toSettingsPath({ error: "resource" }));
+  }
+  const field = (key: string, max: number) => String(formData.get(key) ?? "").trim().slice(0, max);
+  const venue = {
+    hours: field("hours", 600),
+    whatsapp: field("whatsapp", 32),
+    reviewsUrl: field("reviewsUrl", 500),
+    instagram: field("instagram", 100),
+    wifiName: field("wifiName", 64),
+    wifiPassword: field("wifiPassword", 64),
+  };
+  await db.resource.update({
+    where: { id: ctx.resource.id },
+    data: {
+      contactPhone: field("contactPhone", 32) || null,
+      contactAddress: field("contactAddress", 300) || null,
+      socialJson: mergeSocialJson(ctx.resource.socialJson, "venue", venue) as Prisma.InputJsonValue,
+    },
+  });
+  redirect(toSettingsPath({ saved: "venue" }));
 }

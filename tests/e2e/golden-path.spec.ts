@@ -130,4 +130,78 @@ test.describe("with an account", () => {
     await expect(menu.getByText(/principales/i).first()).toBeVisible();
     await guest.close();
   });
+
+  test("venue details show on the public menu", async ({ page, browser }) => {
+    await page.goto("/app/settings");
+    await page.fill('input[name="contactPhone"]', "965 000 000");
+    await page.fill('input[name="whatsapp"]', "600 123 456");
+    await page.fill('textarea[name="hours"]', "L-V 8:00-16:00");
+    await page.fill('input[name="wifiName"]', "BarQA");
+    await page.getByRole("button", { name: /guardar ficha|save details/i }).click();
+    await page.waitForURL(/saved=venue/);
+
+    const guest = await browser.newContext({ storageState: undefined });
+    const menu = await guest.newPage();
+    await menu.goto(`/m/${venue.slug}`);
+    await expect(menu.getByRole("heading", { name: /información del local|venue info/i })).toBeVisible();
+    await expect(menu.locator('a[href="https://wa.me/34600123456"]')).toBeVisible();
+    await expect(menu.getByText("L-V 8:00-16:00")).toBeVisible();
+    await guest.close();
+  });
+
+  test("sold out today shows on the public menu", async ({ page, browser }) => {
+    await openTab(page, "products");
+    const row = page.locator(`[id^="item-"]`).filter({ hasText: "Croquetas de jamón" }).first();
+    await row.getByRole("button", { name: /marcar agotado|mark sold out/i }).click();
+    await expect(row.getByRole("button", { name: /agotado hoy|sold out today/i })).toBeVisible();
+
+    const guest = await browser.newContext({ storageState: undefined });
+    const menu = await guest.newPage();
+    await menu.goto(`/m/${venue.slug}`);
+    await expect(menu.getByText(/^agotado$/i).first()).toBeVisible();
+    await guest.close();
+  });
+
+  test("guests can search dishes across sections", async ({ browser }) => {
+    const guest = await browser.newContext({ storageState: undefined, viewport: { width: 390, height: 844 } });
+    const menu = await guest.newPage();
+    await menu.goto(`/m/${venue.slug}`);
+    await menu.getByRole("searchbox").fill("pulpo");
+    await expect(menu.getByText(/1 resultado/)).toBeVisible();
+    await expect(menu.getByText("Pulpo a la gallega")).toBeVisible();
+    await menu.getByRole("searchbox").fill("zzz");
+    await expect(menu.getByText(/no hay platos/i)).toBeVisible();
+    await guest.close();
+  });
+
+  test("section schedule hides it outside its days and shows the fixed price", async ({ page, browser }) => {
+    const madridDay = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(
+      new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Madrid", weekday: "short" }).format(new Date())
+    ) + 1;
+    await openTab(page, "categories");
+    const sectionRow = (name: string) =>
+      page.locator("div.rounded-md.border.p-3").filter({ has: page.locator(`input[name="name"][value="${name}"]`) });
+
+    const principales = sectionRow("Principales");
+    await principales.locator("summary").click();
+    for (let day = 1; day <= 7; day++) {
+      if (day !== madridDay) await principales.locator(`input[name="days"][value="${day}"]`).check();
+    }
+    await principales.getByRole("button", { name: /guardar horario|save schedule/i }).click();
+    await page.waitForLoadState("networkidle");
+
+    const entrantes = sectionRow("Entrantes");
+    await entrantes.locator("summary").click();
+    await entrantes.locator('input[name="fixedPrice"]').fill("14,50");
+    await entrantes.locator('input[name="note"]').fill("Primero, segundo y postre");
+    await entrantes.getByRole("button", { name: /guardar horario|save schedule/i }).click();
+    await page.waitForLoadState("networkidle");
+
+    const guest = await browser.newContext({ storageState: undefined });
+    const menu = await guest.newPage();
+    await menu.goto(`/m/${venue.slug}`);
+    await expect(menu.getByText(/14,50\s*€ · Primero, segundo y postre/)).toBeVisible();
+    await expect(menu.getByText("Pulpo a la gallega")).toHaveCount(0);
+    await guest.close();
+  });
 });
