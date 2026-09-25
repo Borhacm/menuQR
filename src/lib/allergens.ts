@@ -2,7 +2,7 @@ export type AllergenLocale = "en" | "es";
 
 const allergenNames: Record<string, { en: string; es: string }> = {
   celery: { en: "Celery", es: "Apio" },
-  crustaceans: { en: "Seafood", es: "Mariscos" },
+  crustaceans: { en: "Crustaceans", es: "Crustáceos" },
   eggs: { en: "Eggs", es: "Huevos" },
   fish: { en: "Fish", es: "Pescado" },
   gluten: { en: "Gluten", es: "Gluten" },
@@ -13,16 +13,17 @@ const allergenNames: Record<string, { en: string; es: string }> = {
   peanuts: { en: "Peanuts", es: "Cacahuetes" },
   sesame: { en: "Sesame", es: "Sésamo" },
   soybeans: { en: "Soybeans", es: "Soja" },
-  nuts: { en: "Tree nuts", es: "Frutos secos" },
+  nuts: { en: "Tree nuts", es: "Frutos de cáscara" },
   sulphites: { en: "Sulphites", es: "Sulfitos" },
   tree_nuts: { en: "Tree nuts", es: "Frutos de cáscara" },
   treenuts: { en: "Tree nuts", es: "Frutos de cáscara" },
   "tree-nuts": { en: "Tree nuts", es: "Frutos de cáscara" },
-  crustacean: { en: "Seafood", es: "Mariscos" },
+  crustacean: { en: "Crustaceans", es: "Crustáceos" },
   soybean: { en: "Soybeans", es: "Soja" },
 };
 
-const hiddenAllergenCodes = new Set(["sulphites", "molluscs"]);
+// All 14 allergens of EU Regulation 1169/2011 must be declarable; none may be hidden.
+const hiddenAllergenCodes = new Set<string>();
 
 export function normalizeAllergenCode(code: string): string {
   return code.toLowerCase().trim().replace(/\s+/g, "_");

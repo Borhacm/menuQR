@@ -374,10 +374,7 @@ export function ItemFormAssistant({
           ) : null}
         </div>
         <div className="space-y-2 rounded-md border p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {labels.tagsAndAllergens}
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -405,15 +402,19 @@ export function ItemFormAssistant({
               />
               <span>🥬 {labels.vegetarian}</span>
             </label>
-            <fieldset disabled={!canUseAllergens} className="contents">
+          </div>
+          <fieldset disabled={!canUseAllergens} className="mt-3 border-t pt-3">
+            <legend className="sr-only">{allergensLabel}</legend>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{allergensLabel}</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {allergenOptions.map((allergen) => (
                 <label key={allergen.code} className="flex items-center gap-2 text-sm">
                   <input type="checkbox" name="allergens" value={allergen.code} />
                   <span>{allergen.label}</span>
                 </label>
               ))}
-            </fieldset>
-          </div>
+            </div>
+          </fieldset>
           {!canUseAllergens ? (
             <p className="text-xs text-muted-foreground">{allergensPaidOnlyLabel}</p>
           ) : null}

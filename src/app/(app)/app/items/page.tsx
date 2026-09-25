@@ -34,6 +34,8 @@ import { MenuStyleEditorPanel, MenuStyleMobilePreviewPanel } from "@/components/
 import { MenuQrDashboard } from "@/components/admin/menu-qr-dashboard";
 import { MenuProcessStepper } from "@/components/admin/menu-process-stepper";
 import Image from "next/image";
+import { Pencil } from "lucide-react";
+import { formatPrice } from "@/config/currencies";
 import Link from "next/link";
 import { shouldOptimizeImageSrc } from "@/lib/images";
 import { ItemFormAssistant } from "@/components/admin/item-form-assistant";
@@ -157,6 +159,18 @@ export default async function ItemsPage({
   const filteredInventoryItems = categoryFilterFromUrl
     ? items.filter((item) => item.categoryId === categoryFilterFromUrl)
     : items;
+  // Inventory in menu order: sections as on the public menu, dishes by position.
+  const sectionOrder = new Map(categories.map((category, index) => [category.id, index]));
+  const inventoryGroups = categories
+    .map((category) => ({
+      id: category.id,
+      name: categoryOptionLabel(category),
+      items: filteredInventoryItems
+        .filter((item) => item.categoryId === category.id)
+        .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name)),
+    }))
+    .filter((group) => group.items.length > 0)
+    .sort((a, b) => (sectionOrder.get(a.id) ?? 0) - (sectionOrder.get(b.id) ?? 0));
   const persistInventoryCategory =
     categoryFilterFromUrl ? { categoryId: categoryFilterFromUrl } : {};
   const isDefaultPriceLabel = (label: string | null) => {
@@ -454,7 +468,8 @@ export default async function ItemsPage({
                       <input type="hidden" name="menuId" value={menu.id} />
                       <ActionSubmitButton
                         size="sm"
-                        variant="destructive"
+                        variant="ghost"
+                        className="text-red-600 hover:bg-red-500/10 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         idleLabel={menusT.delete}
                         pendingLabel={locale === "es" ? "Eliminando..." : "Deleting..."}
                         confirmMessage={menusT.deleteConfirm}
@@ -525,11 +540,15 @@ export default async function ItemsPage({
 
       {initialTab === "products" ? (
       <div className="space-y-4 pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.createTitle}</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <details className="group rounded-xl border border-border bg-card" open={items.length === 0}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+              <span className="text-base font-semibold">{t.createTitle}</span>
+              <span className="inline-flex h-9 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground group-open:hidden">
+                {locale === "es" ? "Añadir plato" : "Add dish"}
+              </span>
+              <span className="hidden text-sm text-muted-foreground group-open:inline">{locale === "es" ? "Cerrar" : "Close"}</span>
+            </summary>
+            <div className="border-t border-border px-5 pb-5 pt-4">
               <form action={createItemAction} className="grid gap-3 md:grid-cols-2">
                 <ItemFormAssistant
                   canUseMultipleCurrencies={canUseMultipleCurrencies}
@@ -559,8 +578,8 @@ export default async function ItemsPage({
                   <Button type="submit">{t.save}</Button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </details>
 
           <Card>
             <CardHeader>
@@ -618,23 +637,62 @@ export default async function ItemsPage({
                   {!items.length ? t.empty : t.inventoryNoItemsInCategory}
                 </p>
               ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {filteredInventoryItems.map((item) => {
+              <div className="space-y-8">
+                {inventoryGroups.map((group) => (
+                <section key={group.id} aria-labelledby={`inv-${group.id}`}>
+                  <h3 id={`inv-${group.id}`} className="mb-1 flex items-baseline gap-2 text-sm font-semibold">
+                    {group.name}
+                    <span className="font-normal text-muted-foreground tabular-nums">{group.items.length}</span>
+                  </h3>
+                  <ul className="divide-y divide-border border-y border-border">
+                {group.items.map((item) => {
                   const primaryImage = item.images[0];
+                  const soldOut = soldOutToday.has(item.id);
+                  const editing = editItemId === item.id;
+                  const priceLabel = item.prices
+                    .map((p) => formatPrice(Number(p.amount), p.currency, locale))
+                    .join(" · ");
+                  const tags = [
+                    item.isFeatured ? t.featured : null,
+                    item.isVegan ? t.vegan : null,
+                    item.isVegetarian && !item.isVegan ? t.vegetarian : null,
+                    item.isSpicy ? t.spicy : null,
+                  ].filter(Boolean);
+                  const allergenNames = canUseAllergens
+                    ? item.allergens
+                        .filter((entry) => isVisibleAllergen(entry.allergen.code))
+                        .map((entry) => localizeAllergenName(entry.allergen.code, locale, entry.allergen.name))
+                    : [];
                   return (
-                <div
+                <li
                   key={item.id}
                   id={`item-${item.id}`}
-                  className="flex h-full min-w-0 flex-col space-y-2 rounded-xl border border-border bg-card p-3 shadow-sm scroll-mt-4"
+                  className={cn("scroll-mt-4 py-3.5", editing && "rounded-xl bg-muted/40 px-3")}
                 >
-                  <div className="space-y-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold leading-snug">{item.name}</p>
-                      {item.description ? (
-                        <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">{item.description}</p>
+                  <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:flex-nowrap">
+                    {primaryImage?.url && maxPhotos > 0 ? (
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                        <Image src={primaryImage.url} alt={primaryImage.alt ?? item.name} fill className="object-cover" sizes="48px" unoptimized={!shouldOptimizeImageSrc(primaryImage.url)} loading="lazy" />
+                      </div>
+                    ) : null}
+                    <div className="min-w-0 flex-1 basis-56">
+                      <p className="flex flex-wrap items-center gap-2 font-medium leading-snug">
+                        <span className={soldOut ? "text-muted-foreground line-through" : undefined}>{item.name}</span>
+                        {soldOut ? (
+                          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                            {locale === "es" ? "Agotado hoy" : "Sold out today"}
+                          </span>
+                        ) : null}
+                      </p>
+                      {item.description ? <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">{item.description}</p> : null}
+                      {tags.length || allergenNames.length ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {[tags.join(" · "), allergenNames.length ? `${t.allergens}: ${allergenNames.join(", ")}` : ""].filter(Boolean).join("  ·  ")}
+                        </p>
                       ) : null}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <p className="shrink-0 pt-0.5 text-sm font-semibold tabular-nums">{priceLabel}</p>
+                    <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                       {editItemId === item.id ? (
                         <>
                           <ActionSubmitButton
@@ -659,6 +717,7 @@ export default async function ItemsPage({
                             scroll={false}
                             href={`${appHref("items", { tab: "products", editItemId: item.id, ...persistInventoryCategory })}#item-${item.id}`}
                           >
+                            <Pencil className="mr-1 h-3.5 w-3.5" aria-hidden />
                             {locale === "es" ? "Editar" : "Edit"}
                           </Link>
                         </Button>
@@ -668,12 +727,12 @@ export default async function ItemsPage({
                         <Button
                           type="submit"
                           size="sm"
-                          variant={soldOutToday.has(item.id) ? "default" : "outline"}
-                          aria-pressed={soldOutToday.has(item.id)}
+                          variant="outline"
+                          aria-pressed={soldOut}
                           title={locale === "es" ? "Se reactiva solo mañana" : "Resets automatically tomorrow"}
                         >
-                          {soldOutToday.has(item.id)
-                            ? locale === "es" ? "Agotado hoy ✓" : "Sold out today ✓"
+                          {soldOut
+                            ? locale === "es" ? "Volver a ofrecer" : "Available again"
                             : locale === "es" ? "Marcar agotado" : "Mark sold out"}
                         </Button>
                       </form>
@@ -681,9 +740,10 @@ export default async function ItemsPage({
                         <input type="hidden" name="itemId" value={item.id} />
                         <ActionSubmitButton
                           size="sm"
-                          variant="destructive"
-                          idleLabel={t.delete}
-                          pendingLabel={locale === "es" ? "Eliminando..." : "Deleting..."}
+                          variant="ghost"
+                          className="text-red-600 hover:bg-red-500/10 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          idleLabel={locale === "es" ? "Borrar" : "Delete"}
+                          pendingLabel={locale === "es" ? "Borrando..." : "Deleting..."}
                           confirmMessage={t.deleteConfirm}
                         />
                       </form>
@@ -791,90 +851,12 @@ export default async function ItemsPage({
                       ) : null}
                     </form>
                   ) : null}
-                  {editItemId !== item.id ? (
-                  <div className="flex gap-3">
-                    <div className="flex w-[5.25rem] shrink-0 flex-col gap-1">
-                      {primaryImage?.url ? (
-                        <>
-                          {item.images.slice(0, 2).map((img) => (
-                            <div
-                              key={img.id}
-                              className="flex flex-col overflow-hidden rounded-lg border border-border bg-muted"
-                            >
-                              <div className="relative aspect-square w-full">
-                                <Image
-                                  src={img.url}
-                                  alt={img.alt ?? item.name}
-                                  fill
-                                  className="object-cover"
-                                  sizes="84px"
-                                  unoptimized={!shouldOptimizeImageSrc(img.url)}
-                                  loading="lazy"
-                                />
-                              </div>
-                              {!shouldOptimizeImageSrc(img.url) ? (
-                                <p className="border-t border-amber-500/30 bg-amber-500/10 px-0.5 py-1 text-center text-[7px] font-medium leading-snug text-amber-900 dark:text-amber-200">
-                                  {t.compatibleImage}
-                                </p>
-                              ) : null}
-                            </div>
-                          ))}
-                          {item.images.length > 2 ? (
-                            <div className="flex h-7 items-center justify-center rounded-md bg-muted text-center text-[10px] font-medium text-muted-foreground">
-                              +{item.images.length - 2} {t.morePhotosSuffix}
-                            </div>
-                          ) : null}
-                        </>
-                      ) : (
-                        <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed p-1 text-center text-[10px] leading-tight text-muted-foreground">
-                          {t.noPhoto}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                        <span>
-                          {t.category}: {item.category.name}
-                        </span>
-                        {primaryImage?.url && item.images.length > 1 ? (
-                          <span className="rounded-full border border-border px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">
-                            {item.images.length}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-wrap gap-1 text-[10px]">
-                        {item.isFeatured ? <span className="rounded-full border px-1.5 py-0.5">{t.featured}</span> : null}
-                        {item.isVegan ? <span className="rounded-full border px-1.5 py-0.5">{t.vegan}</span> : null}
-                        {item.isVegetarian ? (
-                          <span className="rounded-full border px-1.5 py-0.5">{t.vegetarian}</span>
-                        ) : null}
-                        {item.isSpicy ? <span className="rounded-full border px-1.5 py-0.5">{t.spicy}</span> : null}
-                      </div>
-                      {canUseAllergens && item.allergens.length ? (
-                        <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
-                          {item.allergens
-                            .filter((entry) => isVisibleAllergen(entry.allergen.code))
-                            .map((entry) => (
-                              <span key={entry.allergenId} className="rounded-full border px-1.5 py-0.5">
-                                {entry.allergen.icon ? `${entry.allergen.icon} ` : ""}
-                                {localizeAllergenName(entry.allergen.code, locale, entry.allergen.name)}
-                              </span>
-                            ))}
-                        </div>
-                      ) : null}
-                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] font-medium text-primary">
-                        {item.prices.map((p) => (
-                          <span key={p.id}>
-                            {p.currency} {String(p.amount)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  ) : null}
-                </div>
+                </li>
                   );
                 })}
+                  </ul>
+                </section>
+                ))}
               </div>
               )}
             </CardContent>

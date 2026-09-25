@@ -33,6 +33,11 @@ async function openTab(page: Page, tab: string) {
   await page.waitForLoadState("networkidle");
 }
 
+async function openCreateForm(page: Page) {
+  const add = page.getByText(/^añadir plato$|^add dish$/i);
+  if (await add.isVisible()) await add.click();
+}
+
 function productForm(page: Page) {
   return page.locator("form").filter({ has: page.getByRole("button", { name: /save product|guardar/i }) });
 }
@@ -111,6 +116,7 @@ test.describe("with an account", () => {
       ["Tarta de queso", "6.50", "Principales"],
     ]) {
       await openTab(page, "products");
+      await openCreateForm(page);
       const form = productForm(page);
       await form.locator('input[name="name"]').fill(name);
       await form.locator('select[name="categoryId"]').selectOption({ label: section });
@@ -191,7 +197,8 @@ test.describe("with an account", () => {
     await openTab(page, "products");
     const row = page.locator(`[id^="item-"]`).filter({ hasText: "Croquetas de jamón" }).first();
     await row.getByRole("button", { name: /marcar agotado|mark sold out/i }).click();
-    await expect(row.getByRole("button", { name: /agotado hoy|sold out today/i })).toBeVisible();
+    await expect(row.getByText(/agotado hoy|sold out today/i)).toBeVisible();
+    await expect(row.getByRole("button", { name: /volver a ofrecer|available again/i })).toBeVisible();
 
     const guest = await browser.newContext({ storageState: undefined });
     const menu = await guest.newPage();

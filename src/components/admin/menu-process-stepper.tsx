@@ -168,9 +168,7 @@ export function MenuProcessStepper({
           ) : (
             <Button type="button" size="sm" disabled>
               {rawNextStep
-                ? locale === "es"
-                  ? "Completa pasos previos"
-                  : "Complete previous steps"
+                ? lockedNextHint(rawNextStep.tab, locale)
                 : locale === "es"
                   ? "Finalizado"
                   : "Completed"}
@@ -180,4 +178,12 @@ export function MenuProcessStepper({
       </div>
     </>
   );
+}
+
+/** Tells the owner what unlocks the next step instead of a generic "complete previous steps". */
+function lockedNextHint(nextTab: string, locale: string) {
+  const es = locale === "es";
+  if (nextTab === "products") return es ? "Crea una sección para seguir" : "Create a section to continue";
+  if (nextTab === "translations") return es ? "Añade un plato para seguir" : "Add a dish to continue";
+  return es ? "Acepta las traducciones para seguir" : "Accept the translations to continue";
 }
