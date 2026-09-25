@@ -10,8 +10,9 @@ import { getPlan } from "@/config/plans";
 import { getSecondaryTranslationLocales } from "@/lib/translation/locales";
 import { isTrustedRequestOrigin } from "@/lib/security/request-origin";
 
-type TranslateProvider = "auto" | "gemini" | "openai" | "libretranslate" | "suffix";
+type TranslateProvider = "auto" | "gemini" | "openai" | "libretranslate" | "mymemory" | "suffix";
 
+// Exact-match terms (Spanish source) that machine translation often gets wrong, e.g. "Entrantes" -> "Incoming".
 const culinaryGlossary: Record<string, Record<string, string>> = {
   en: {
     "patatas fritas": "French fries",
@@ -21,6 +22,29 @@ const culinaryGlossary: Record<string, Record<string, string>> = {
     "tortilla espanola": "Spanish omelette",
     "café con leche": "Cafe latte",
     "cafe con leche": "Cafe latte",
+    "entrantes": "Starters",
+    "primeros": "First courses",
+    "segundos": "Main courses",
+    "principales": "Main courses",
+    "platos principales": "Main courses",
+    "postres": "Desserts",
+    "bebidas": "Drinks",
+    "raciones": "Sharing plates",
+    "medias raciones": "Half portions",
+    "tapas": "Tapas",
+    "para compartir": "To share",
+    "ensaladas": "Salads",
+    "carnes": "Meat",
+    "pescados": "Fish",
+    "arroces": "Rice dishes",
+    "menú del día": "Set menu of the day",
+    "menu del dia": "Set menu of the day",
+    "vinos": "Wines",
+    "cervezas": "Beers",
+    "cafés": "Coffees",
+    "cafes": "Coffees",
+    "desayunos": "Breakfast",
+    "bocadillos": "Sandwiches",
   },
   fr: {
     "patatas fritas": "Frites",
@@ -28,6 +52,64 @@ const culinaryGlossary: Record<string, Record<string, string>> = {
     "croquetas": "Croquettes",
     "café con leche": "Cafe au lait",
     "cafe con leche": "Cafe au lait",
+    "entrantes": "Entrées",
+    "primeros": "Entrées",
+    "segundos": "Plats principaux",
+    "principales": "Plats principaux",
+    "platos principales": "Plats principaux",
+    "postres": "Desserts",
+    "bebidas": "Boissons",
+    "raciones": "Assiettes à partager",
+    "para compartir": "À partager",
+    "ensaladas": "Salades",
+    "carnes": "Viandes",
+    "pescados": "Poissons",
+    "arroces": "Riz",
+    "menú del día": "Menu du jour",
+    "menu del dia": "Menu du jour",
+    "vinos": "Vins",
+    "cervezas": "Bières",
+    "desayunos": "Petit-déjeuner",
+  },
+  de: {
+    "entrantes": "Vorspeisen",
+    "primeros": "Vorspeisen",
+    "segundos": "Hauptgerichte",
+    "principales": "Hauptgerichte",
+    "platos principales": "Hauptgerichte",
+    "postres": "Desserts",
+    "bebidas": "Getränke",
+    "raciones": "Zum Teilen",
+    "para compartir": "Zum Teilen",
+    "ensaladas": "Salate",
+    "carnes": "Fleisch",
+    "pescados": "Fisch",
+    "arroces": "Reisgerichte",
+    "menú del día": "Tagesmenü",
+    "menu del dia": "Tagesmenü",
+    "vinos": "Weine",
+    "cervezas": "Biere",
+    "desayunos": "Frühstück",
+  },
+  it: {
+    "entrantes": "Antipasti",
+    "primeros": "Primi piatti",
+    "segundos": "Secondi piatti",
+    "principales": "Secondi piatti",
+    "platos principales": "Secondi piatti",
+    "postres": "Dolci",
+    "bebidas": "Bevande",
+    "raciones": "Da condividere",
+    "para compartir": "Da condividere",
+    "ensaladas": "Insalate",
+    "carnes": "Carni",
+    "pescados": "Pesce",
+    "arroces": "Risi",
+    "menú del día": "Menù del giorno",
+    "menu del dia": "Menù del giorno",
+    "vinos": "Vini",
+    "cervezas": "Birre",
+    "desayunos": "Colazione",
   },
 };
 
@@ -37,7 +119,7 @@ function redirectToTranslations(req: Request, status: string) {
 
 function getTranslateProvider(): TranslateProvider {
   const raw = (process.env.TRANSLATE_PROVIDER ?? "auto").trim().toLowerCase();
-  if (raw === "gemini" || raw === "openai" || raw === "libretranslate" || raw === "suffix") return raw;
+  if (raw === "gemini" || raw === "openai" || raw === "libretranslate" || raw === "mymemory" || raw === "suffix") return raw;
   return "auto";
 }
 
@@ -155,6 +237,25 @@ const TRANSLATOR_INSTRUCTIONS = [
   "Return only the translated text.",
 ].join(" ");
 
+/**
+ * MyMemory: free machine translation with no account or key (5,000 chars/day anonymous, 50,000 with
+ * MYMEMORY_EMAIL). Last resort so translations work even when no provider is configured.
+ */
+async function translateWithMyMemory(text: string, locale: string, sourceLocale: string) {
+  if (!sourceLocale || sourceLocale === locale) return text;
+  const params = new URLSearchParams({ q: text.slice(0, 480), langpair: `${sourceLocale}|${locale}` });
+  const email = process.env.MYMEMORY_EMAIL?.trim();
+  if (email) params.set("de", email);
+  const res = await fetch(`https://api.mymemory.translated.net/get?${params}`, { signal: AbortSignal.timeout(15_000) });
+  if (!res.ok) throw new Error(`MyMemory failed with status ${res.status}`);
+  const data = (await res.json()) as { responseStatus?: number | string; responseData?: { translatedText?: string } };
+  const out = data.responseData?.translatedText?.trim();
+  if (Number(data.responseStatus) !== 200 || !out || /MYMEMORY WARNING|QUOTA/i.test(out)) {
+    throw new Error(`MyMemory returned status ${data.responseStatus}`);
+  }
+  return out;
+}
+
 async function translateWithGemini(text: string, locale: string) {
   const out = await geminiGenerate({ system: TRANSLATOR_INSTRUCTIONS, parts: [{ text: `Translate to ${locale}: ${text}` }] });
   return out || text;
@@ -185,7 +286,7 @@ async function translateWithOpenAI(text: string, locale: string) {
   return completion.choices[0]?.message?.content?.trim() || text;
 }
 
-async function translateText(text: string, locale: string) {
+async function translateText(text: string, locale: string, sourceLocale = "") {
   if (!text.trim()) return text;
   const glossaryMatch = applyGlossary(text, locale);
   if (glossaryMatch) return glossaryMatch;
@@ -193,6 +294,9 @@ async function translateText(text: string, locale: string) {
 
   if (provider === "suffix") {
     return postNormalizeCulinaryTranslation(`${text} (${locale.toUpperCase()})`, locale);
+  }
+  if (provider === "mymemory") {
+    return postNormalizeCulinaryTranslation(await translateWithMyMemory(text, locale, sourceLocale), locale);
   }
   if (provider === "gemini") {
     try {
@@ -252,7 +356,13 @@ async function translateText(text: string, locale: string) {
     console.warn("[translate] OpenAI unavailable after LibreTranslate retry:", openaiError);
   }
 
-  throw new Error("No translation provider available (LibreTranslate/OpenAI)");
+  try {
+    return postNormalizeCulinaryTranslation(await translateWithMyMemory(text, locale, sourceLocale), locale);
+  } catch (myMemoryError) {
+    console.warn("[translate] MyMemory unavailable:", myMemoryError);
+  }
+
+  throw new Error("No translation provider available (Gemini/OpenAI/LibreTranslate/MyMemory)");
 }
 
 function buildSourceHash(text: string) {
@@ -277,6 +387,7 @@ async function upsertAiTranslation(params: {
   locale: string;
   field: string;
   sourceText: string;
+  sourceLocale?: string;
 }) {
   const sourceHash = buildSourceHash(params.sourceText);
   let existing:
@@ -319,7 +430,7 @@ async function upsertAiTranslation(params: {
     if (existing?.status === "APPROVED") return;
   }
 
-  const value = await translateText(params.sourceText, params.locale);
+  const value = await translateText(params.sourceText, params.locale, params.sourceLocale);
   try {
     await db.translation.upsert({
       where: {
@@ -443,6 +554,7 @@ export async function POST(req: Request) {
 
     for (const locale of targetLocales) {
       await upsertAiTranslation({
+        sourceLocale: resource.defaultLocale,
         entityType: "RESOURCE",
         entityId: resource.id,
         locale,
@@ -452,6 +564,7 @@ export async function POST(req: Request) {
 
       for (const menu of menus) {
         await upsertAiTranslation({
+          sourceLocale: resource.defaultLocale,
           entityType: "MENU",
           entityId: menu.id,
           locale,
@@ -461,6 +574,7 @@ export async function POST(req: Request) {
 
         for (const category of menu.categories) {
           await upsertAiTranslation({
+            sourceLocale: resource.defaultLocale,
             entityType: "CATEGORY",
             entityId: category.id,
             locale,
@@ -470,6 +584,7 @@ export async function POST(req: Request) {
 
           for (const item of category.items) {
             await upsertAiTranslation({
+              sourceLocale: resource.defaultLocale,
               entityType: "ITEM",
               entityId: item.id,
               locale,
@@ -478,6 +593,7 @@ export async function POST(req: Request) {
             });
             if (item.description) {
               await upsertAiTranslation({
+                sourceLocale: resource.defaultLocale,
                 entityType: "ITEM",
                 entityId: item.id,
                 locale,
@@ -487,6 +603,7 @@ export async function POST(req: Request) {
             }
             for (const price of item.prices) {
               await upsertAiTranslation({
+                sourceLocale: resource.defaultLocale,
                 entityType: "ITEM_PRICE",
                 entityId: price.id,
                 locale,
