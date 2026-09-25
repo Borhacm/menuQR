@@ -181,7 +181,7 @@ test.describe("with an account", () => {
     const guest = await browser.newContext({ storageState: undefined });
     const menu = await guest.newPage();
     await menu.goto(`/m/${venue.slug}`);
-    await expect(menu.getByRole("heading", { name: /información del local|venue info/i })).toBeVisible();
+    await expect(menu.getByRole("heading", { name: /visítanos|visit us/i })).toBeVisible();
     await expect(menu.locator('a[href="https://wa.me/34600123456"]')).toBeVisible();
     await expect(menu.getByText("L-V 8:00-16:00")).toBeVisible();
     await guest.close();
@@ -204,6 +204,7 @@ test.describe("with an account", () => {
     const guest = await browser.newContext({ storageState: undefined, viewport: { width: 390, height: 844 } });
     const menu = await guest.newPage();
     await menu.goto(`/m/${venue.slug}`);
+    await menu.getByRole("button", { name: /buscar en la carta|search the menu/i }).click();
     await menu.getByRole("searchbox").fill("pulpo");
     await expect(menu.getByText(/1 resultado/)).toBeVisible();
     await expect(menu.getByText("Pulpo a la gallega")).toBeVisible();

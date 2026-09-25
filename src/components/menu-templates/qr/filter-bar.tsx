@@ -44,7 +44,7 @@ export function FilterBar({
   theme?: MenuTheme;
 }) {
   return (
-    <div className="sticky top-2 z-10 space-y-2">
+    <div className="space-y-2">
       <div className="flex flex-wrap items-stretch gap-2">
         {dietFilterChips.map((chip) => {
           const enabled = dietFilters[chip.key as keyof typeof dietFilters];
@@ -60,7 +60,7 @@ export function FilterBar({
                   ? chip.key === "spicy"
                     ? "border-rose-300/70 bg-rose-500/12 text-rose-700 dark:border-rose-400/40 dark:text-rose-300"
                     : "border-primary/40 bg-primary/12 text-primary"
-                  : "border-zinc-500/45 bg-zinc-900/65 text-zinc-100 hover:border-primary/35 dark:border-border dark:bg-card/80 dark:text-foreground/90"
+                  : "border-border bg-card text-foreground hover:border-primary/35 dark:border-border dark:bg-card/80 dark:text-foreground/90"
               )}
             >
               <span className="inline-flex min-w-0 items-center gap-1">
@@ -75,7 +75,7 @@ export function FilterBar({
           <select
             value={excludedAllergenCode}
             onChange={(event) => onExcludeAllergenChange(event.target.value)}
-            className="min-h-8 w-full rounded-full border border-zinc-500/50 bg-zinc-950/85 px-2 text-[10px] font-medium text-zinc-50 outline-none transition-all duration-200 ease-out focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-border dark:bg-card/85 dark:text-foreground"
+            className="min-h-8 w-full rounded-full border border-border bg-card px-2 text-[10px] font-medium text-foreground outline-none transition-all duration-200 ease-out focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-border dark:bg-card/85 dark:text-foreground"
             style={
               theme
                 ? {

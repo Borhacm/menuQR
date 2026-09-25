@@ -10,6 +10,7 @@ export function ModernTemplate({
   canShowAllergens,
   analytics,
   initialCurrency,
+  embedded = false,
 }: {
   title: string;
   categories: ReadonlyArray<MenuCategory>;
@@ -22,6 +23,7 @@ export function ModernTemplate({
     enableItemTracking?: boolean;
   };
   initialCurrency?: string;
+  embedded?: boolean;
 }) {
   return (
     <QrMenuTemplate
@@ -33,6 +35,7 @@ export function ModernTemplate({
       canShowAllergens={canShowAllergens}
       analytics={analytics}
       initialCurrency={initialCurrency}
+      embedded={embedded}
     />
   );
 }

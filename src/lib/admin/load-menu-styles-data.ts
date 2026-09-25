@@ -1,3 +1,4 @@
+import { DEFAULT_MENU_THEME } from "@/config/menu-themes";
 import { db } from "@/lib/db";
 import { hasAllergenFeature } from "@/config/plans";
 import type { AdminLocale } from "@/lib/admin/i18n";
@@ -95,12 +96,12 @@ export async function loadMenuStylesData(opts: {
       : "classic";
 
   const theme = (themeJson && typeof themeJson === "object" ? themeJson : {}) as Record<string, unknown>;
-  const primaryColor = typeof theme.primary === "string" && theme.primary ? theme.primary : "#ffd400";
+  const primaryColor = typeof theme.primary === "string" && theme.primary ? theme.primary : DEFAULT_MENU_THEME.primaryColor;
   const backgroundColor =
-    typeof theme.background === "string" && theme.background ? theme.background : "#0d0d0d";
-  const surfaceColor = typeof theme.surface === "string" && theme.surface ? theme.surface : "#1a1a1a";
-  const textColor = typeof theme.text === "string" && theme.text ? theme.text : "#f5f5f5";
-  const borderColor = typeof theme.border === "string" && theme.border ? theme.border : "#333333";
+    typeof theme.background === "string" && theme.background ? theme.background : DEFAULT_MENU_THEME.backgroundColor;
+  const surfaceColor = typeof theme.surface === "string" && theme.surface ? theme.surface : DEFAULT_MENU_THEME.surfaceColor;
+  const textColor = typeof theme.text === "string" && theme.text ? theme.text : DEFAULT_MENU_THEME.textColor;
+  const borderColor = typeof theme.border === "string" && theme.border ? theme.border : DEFAULT_MENU_THEME.borderColor;
   const fontFamily = typeof theme.fontFamily === "string" && theme.fontFamily ? theme.fontFamily : "Inter";
   const density = typeof theme.density === "string" && theme.density ? theme.density : "comfortable";
 

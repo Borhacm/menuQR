@@ -1,5 +1,6 @@
 "use server";
 
+import { DEFAULT_MENU_THEME } from "@/config/menu-themes";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createHash } from "node:crypto";
@@ -139,11 +140,11 @@ export async function updateResourceAction(formData: FormData) {
             }
           : (ctx.resource.socialJson as Prisma.InputJsonValue | undefined),
         themeJson: {
-          primary: sanitizeHexColor(formData.get("primaryColor"), "#ffd400"),
-          background: sanitizeHexColor(formData.get("backgroundColor"), "#0d0d0d"),
-          surface: sanitizeHexColor(formData.get("surfaceColor"), "#1a1a1a"),
-          text: sanitizeHexColor(formData.get("textColor"), "#f5f5f5"),
-          border: sanitizeHexColor(formData.get("borderColor"), "#333333"),
+          primary: sanitizeHexColor(formData.get("primaryColor"), DEFAULT_MENU_THEME.primaryColor),
+          background: sanitizeHexColor(formData.get("backgroundColor"), DEFAULT_MENU_THEME.backgroundColor),
+          surface: sanitizeHexColor(formData.get("surfaceColor"), DEFAULT_MENU_THEME.surfaceColor),
+          text: sanitizeHexColor(formData.get("textColor"), DEFAULT_MENU_THEME.textColor),
+          border: sanitizeHexColor(formData.get("borderColor"), DEFAULT_MENU_THEME.borderColor),
           fontFamily: String(formData.get("fontFamily") ?? "Inter").trim() || "Inter",
           density: String(formData.get("density") ?? "comfortable").trim() || "comfortable",
         },
@@ -962,11 +963,11 @@ export async function updateTemplateStylesAction(formData: FormData) {
     where: { id: ctx.resource.id },
     data: {
       themeJson: {
-        primary: sanitizeHexColor(formData.get("primaryColor"), "#ffd400"),
-        background: sanitizeHexColor(formData.get("backgroundColor"), "#0d0d0d"),
-        surface: sanitizeHexColor(formData.get("surfaceColor"), "#1a1a1a"),
-        text: sanitizeHexColor(formData.get("textColor"), "#f5f5f5"),
-        border: sanitizeHexColor(formData.get("borderColor"), "#333333"),
+        primary: sanitizeHexColor(formData.get("primaryColor"), DEFAULT_MENU_THEME.primaryColor),
+        background: sanitizeHexColor(formData.get("backgroundColor"), DEFAULT_MENU_THEME.backgroundColor),
+        surface: sanitizeHexColor(formData.get("surfaceColor"), DEFAULT_MENU_THEME.surfaceColor),
+        text: sanitizeHexColor(formData.get("textColor"), DEFAULT_MENU_THEME.textColor),
+        border: sanitizeHexColor(formData.get("borderColor"), DEFAULT_MENU_THEME.borderColor),
         fontFamily: String(formData.get("fontFamily") ?? "Inter").trim() || "Inter",
         density: String(formData.get("density") ?? "comfortable").trim() || "comfortable",
       },

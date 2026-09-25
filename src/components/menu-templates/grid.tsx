@@ -53,7 +53,7 @@ const uiByLocale: Record<
     noResultsHint: "Prueba con otra combinación de filtros o límpialos.",
     clearFilters: "Limpiar filtros",
     backToTop: "Ir arriba",
-    featured: "Recomendados",
+    featured: "Recomendados de la casa",
     itemDetails: "Producto",
     close: "Cerrar",
     vegan: "Vegano",
@@ -71,7 +71,7 @@ const uiByLocale: Record<
     noResultsHint: "Try another filter combination or clear filters.",
     clearFilters: "Clear filters",
     backToTop: "Back to top",
-    featured: "Featured",
+    featured: "House favourites",
     itemDetails: "Item",
     close: "Close",
     vegan: "Vegan",
@@ -170,6 +170,7 @@ export function GridTemplate({
   theme,
   canShowAllergens = false,
   initialCurrency,
+  embedded = false,
 }: {
   title: string;
   categories: ReadonlyArray<MenuCategory>;
@@ -178,6 +179,8 @@ export function GridTemplate({
   theme?: MenuTheme;
   canShowAllergens?: boolean;
   initialCurrency?: string;
+  /** Inside PublicMenuShell: no own header, no card chrome or decorative glows. */
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -293,7 +296,11 @@ export function GridTemplate({
 
   return (
     <div
-      className="relative overflow-hidden rounded-[28px] border border-white/20 bg-slate-950/90 p-3 shadow-[0_24px_60px_-28px_rgba(56,189,248,0.5)] backdrop-blur-xl sm:p-4"
+      className={
+        embedded
+          ? "relative px-4 pb-4 sm:px-8"
+          : "relative overflow-hidden rounded-[28px] border border-[var(--g-border)] p-3 sm:p-4"
+      }
       style={
         ({
           backgroundColor: theme?.background ?? "#060b16",
@@ -302,17 +309,24 @@ export function GridTemplate({
           fontFamily: theme?.fontFamily || undefined,
           ["--grid-primary" as string]: theme?.primary ?? "#4cc9ff",
           ["--grid-surface" as string]: theme?.surface ?? "#0e1628",
+          // Every color below derives from the venue theme so light themes stay legible.
+          ["--g-text" as string]: theme?.text ?? "#e6f2ff",
+          ["--g-muted" as string]: `color-mix(in srgb, ${theme?.text ?? "#e6f2ff"} 68%, ${theme?.background ?? "#060b16"})`,
+          ["--g-primary" as string]: theme?.primary ?? "#4cc9ff",
+          ["--g-surface" as string]: theme?.surface ?? "#0e1628",
+          ["--g-border" as string]: theme?.border ?? "#1f2a44",
+          ["--g-bg" as string]: theme?.background ?? "#060b16",
         } as CSSProperties)
       }
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(76,201,255,0.18),transparent_42%)]" />
-      <header className="relative mb-3 space-y-2 rounded-2xl border border-white/20 bg-gradient-to-r from-slate-900/95 to-slate-800/90 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
+      {embedded ? null : (
+      <header className="relative mb-3 space-y-2 rounded-2xl border border-[var(--g-border)] bg-[var(--g-surface)] p-3 shadow-sm">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
           <div className="min-w-0 pr-1">
             <div className="mb-1.5">
-              <Logo className="text-base text-white" />
+              <Logo className="text-base text-[var(--g-text)]" />
             </div>
-            <h1 className="break-words font-display text-2xl font-bold leading-tight text-white sm:text-3xl">{title}</h1>
+            <h1 className="break-words font-display text-2xl font-bold leading-tight text-[var(--g-text)] sm:text-3xl">{title}</h1>
           </div>
           {locales.length > 1 ? (
             <label className="block w-full max-w-full justify-self-stretch sm:w-auto sm:max-w-[10rem] sm:justify-self-end">
@@ -321,7 +335,7 @@ export function GridTemplate({
                 value={locale}
                 onChange={(event) => setUrlState({ localeValue: event.target.value })}
                 aria-label={ui.language}
-                className="h-9 w-full max-w-full cursor-pointer rounded-xl border border-white/40 bg-slate-950/85 py-0 pl-2 pr-8 text-[10px] font-semibold uppercase tracking-wide text-white shadow-inner outline-none backdrop-blur focus:border-cyan-300/70 focus:ring-2 focus:ring-cyan-400/25"
+                className="h-9 w-full max-w-full cursor-pointer rounded-xl border border-[var(--g-border)] bg-[var(--g-surface)] py-0 pl-2 pr-8 text-[10px] font-semibold uppercase tracking-wide text-[var(--g-text)] shadow-inner outline-none  focus:border-[var(--g-primary)]/70 focus:ring-2 focus:ring-[var(--g-primary)]"
               >
                 {locales.map((enabledLocale) => (
                   <option key={enabledLocale} value={enabledLocale}>
@@ -333,10 +347,11 @@ export function GridTemplate({
           ) : null}
         </div>
       </header>
+      )}
 
       {featuredItems.length > 0 && !hasActiveFilters ? (
-        <section className="relative mb-3 rounded-2xl border border-white/20 bg-slate-900/75 p-2">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">{ui.featured}</p>
+        <section className="relative mb-4">
+          <h2 className="mb-2 px-1 font-display text-lg font-bold tracking-[-0.015em]">{ui.featured}</h2>
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {featuredItems.map((item) => {
               const selectedPrice = item.prices.find((price) => price.currency === displayCurrency) ?? item.prices[0];
@@ -345,7 +360,7 @@ export function GridTemplate({
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedItemId(item.id)}
-                  className="min-w-[200px] rounded-xl border border-cyan-300/25 bg-[var(--grid-surface)] p-2 text-left shadow-[0_12px_30px_-18px_rgba(56,189,248,0.6)] outline-none ring-offset-slate-950 focus-visible:ring-2 focus-visible:ring-cyan-400/80"
+                  className="min-w-[200px] rounded-xl border border-[var(--g-border)] bg-[var(--grid-surface)] p-2 text-left shadow-sm outline-none focus-visible:ring-offset-[var(--g-bg)] focus-visible:ring-2 focus-visible:ring-[var(--g-primary)]"
                 >
                   <MenuItemMedia
                     image={item.images?.[0] ? { url: item.images[0].url, alt: item.images[0].alt ?? null } : null}
@@ -353,8 +368,8 @@ export function GridTemplate({
                     className="mb-2 aspect-[16/10] w-full rounded-lg object-cover"
                     sizes="(max-width: 640px) 200px, 240px"
                   />
-                  <p className="line-clamp-1 text-base font-semibold text-white">{item.name}<SoldOutBadge label={item.soldOut} /></p>
-                  <p className="mt-1 text-sm font-semibold text-cyan-200">
+                  <p className="line-clamp-1 text-base font-semibold text-[var(--g-text)]">{item.name}<SoldOutBadge label={item.soldOut} /></p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--g-primary)]">
                     {selectedPrice ? formatPrice(Number(selectedPrice.amount), selectedPrice.currency, locale) : "-"}
                   </p>
                 </button>
@@ -365,7 +380,7 @@ export function GridTemplate({
       ) : null}
 
       <section className="relative mb-3 space-y-3">
-        <div className="rounded-xl border border-dashed border-white/25 bg-slate-950/55 p-2.5">
+        <div className="rounded-xl border border-dashed border-[var(--g-border)] bg-[var(--g-surface)] p-2.5">
           <div className="flex flex-wrap items-stretch gap-2">
             {([
               { key: "vegan", label: ui.vegan, icon: Leaf },
@@ -386,8 +401,8 @@ export function GridTemplate({
                   className={cn(
                     "inline-flex min-h-9 min-w-0 flex-1 basis-[calc(50%-0.25rem)] items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-[9px] font-semibold uppercase leading-tight tracking-wide transition-colors sm:max-w-[9.25rem] sm:basis-auto sm:text-[10px]",
                     enabled
-                      ? "border-cyan-400/55 bg-cyan-500/20 text-cyan-50"
-                      : "border-white/30 bg-slate-950/70 text-slate-100 hover:border-white/45 hover:bg-slate-900/80"
+                      ? "border-[var(--g-primary)] bg-[color-mix(in_srgb,var(--g-primary)_16%,transparent)] text-[var(--g-text)]"
+                      : "border-[var(--g-border)] bg-[var(--g-surface)] text-[var(--g-text)] hover:border-[var(--g-border)] hover:bg-[var(--g-surface)]"
                   )}
                 >
                   <Icon className="h-3 w-3 shrink-0" />
@@ -404,7 +419,7 @@ export function GridTemplate({
                   setExcludedAllergenCode(event.target.value);
                   setUrlState({ excludedAllergen: event.target.value });
                 }}
-                className="h-9 w-full rounded-lg border border-white/35 bg-slate-950/90 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-50 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30"
+                className="h-9 w-full rounded-lg border border-[var(--g-border)] bg-[var(--g-surface)] px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--g-text)] outline-none focus:border-[var(--g-primary)] focus:ring-1 focus:ring-[var(--g-primary)]"
               >
                 <option value="">{ui.noAllergenExclusion}</option>
                 {allergenCodes.map((code) => (
@@ -418,10 +433,8 @@ export function GridTemplate({
         </div>
 
         <div>
-          <p className="mb-1.5 px-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-200/75">
-            {ui.sectionMenu}
-          </p>
-          <div className="-mx-1 flex snap-x gap-1 overflow-x-auto border-b border-white/10 px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+          <div className="-mx-1 flex snap-x gap-1 overflow-x-auto border-b border-[var(--g-border)] px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {categories.map((category) => {
               const active = category.id === activeCategory?.id;
               return (
@@ -433,10 +446,10 @@ export function GridTemplate({
                     setUrlState({ categoryId: category.id });
                   }}
                   className={cn(
-                    "shrink-0 snap-start border-b-2 px-2.5 pb-2.5 pt-1 text-left text-[12px] font-semibold uppercase tracking-[0.06em] transition-colors",
+                    "shrink-0 snap-start border-b-2 px-2.5 pb-2.5 pt-1 text-left text-sm font-semibold transition-colors",
                     active
-                      ? "border-cyan-300 text-cyan-100"
-                      : "border-transparent text-slate-400 hover:text-slate-200"
+                      ? "border-[var(--g-primary)] text-[var(--g-text)]"
+                      : "border-transparent text-[var(--g-muted)] hover:text-[var(--g-text)]"
                   )}
                   style={
                     theme && active
@@ -457,7 +470,7 @@ export function GridTemplate({
 
       <section className="space-y-2 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {activeCategory?.description ? (
-          <p className="whitespace-pre-line px-1 text-sm text-slate-300">{activeCategory.description}</p>
+          <p className="whitespace-pre-line px-1 text-sm text-[var(--g-muted)]">{activeCategory.description}</p>
         ) : null}
         {visibleItems.length > 0 ? (
           <div className="grid gap-2 sm:grid-cols-2">
@@ -468,7 +481,7 @@ export function GridTemplate({
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedItemId(item.id)}
-                  className="rounded-2xl border border-white/20 bg-[var(--grid-surface)] p-3 text-left shadow-[0_16px_36px_-22px_rgba(59,130,246,0.45)] outline-none ring-offset-2 ring-offset-slate-950 focus-visible:ring-2 focus-visible:ring-cyan-400/80"
+                  className="rounded-2xl border border-[var(--g-border)] bg-[var(--grid-surface)] p-3 text-left shadow-sm outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--g-bg)] focus-visible:ring-2 focus-visible:ring-[var(--g-primary)]"
                 >
                   <MenuItemMedia
                     image={item.images?.[0] ? { url: item.images[0].url, alt: item.images[0].alt ?? null } : null}
@@ -476,23 +489,23 @@ export function GridTemplate({
                     className="mb-2 aspect-video w-full rounded-xl object-cover"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
-                  <h2 className="text-lg font-semibold leading-tight text-white">{item.name}<SoldOutBadge label={item.soldOut} /></h2>
+                  <h2 className="text-lg font-semibold leading-tight text-[var(--g-text)]">{item.name}<SoldOutBadge label={item.soldOut} /></h2>
                   {item.description ? (
-                    <p className="mt-1 text-sm font-medium leading-snug text-slate-100/90">{item.description}</p>
+                    <p className="mt-1 text-sm font-medium leading-snug text-[var(--g-text)]/90">{item.description}</p>
                   ) : null}
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {item.isVegan ? <span className="rounded-full border border-emerald-300/35 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-200">{ui.vegan}</span> : null}
-                    {item.isVegetarian ? <span className="rounded-full border border-lime-300/35 bg-lime-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-lime-200">{ui.vegetarian}</span> : null}
-                    {item.isSpicy ? <span className="rounded-full border border-rose-300/35 bg-rose-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-rose-200">{ui.spicy}</span> : null}
+                    {item.isVegan ? <span className="rounded-full border border-[var(--g-border)] bg-[var(--g-surface)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--g-text)]">{ui.vegan}</span> : null}
+                    {item.isVegetarian ? <span className="rounded-full border border-[var(--g-border)] bg-[var(--g-surface)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--g-text)]">{ui.vegetarian}</span> : null}
+                    {item.isSpicy ? <span className="rounded-full border border-[var(--g-border)] bg-[var(--g-surface)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--g-text)]">{ui.spicy}</span> : null}
                     {canShowAllergens
                       ? (item.allergens ?? []).map((entry) => (
-                          <span key={entry.allergen.id} className="rounded-full border border-white/25 bg-slate-800/70 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-200">
+                          <span key={entry.allergen.id} className="rounded-full border border-[var(--g-border)] bg-[var(--g-surface)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--g-text)]">
                             {localizeAllergenName(entry.allergen.code, locale, entry.allergen.name)}
                           </span>
                         ))
                       : null}
                   </div>
-                  <p className="mt-3 inline-block rounded-lg border border-cyan-300/55 bg-cyan-400/20 px-2.5 py-1 text-sm font-semibold text-cyan-100">
+                  <p className="mt-3 inline-block rounded-lg border border-[var(--g-primary)]/55 bg-[color-mix(in_srgb,var(--g-primary)_16%,transparent)] px-2.5 py-1 text-sm font-semibold text-[var(--g-text)]">
                     {selectedPrice ? formatPrice(Number(selectedPrice.amount), selectedPrice.currency, locale) : "-"}
                   </p>
                 </button>
@@ -523,7 +536,7 @@ export function GridTemplate({
                 excludedAllergen: "",
               });
             }}
-            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-white/25 bg-slate-900/90 text-[11px] font-semibold uppercase text-slate-100 backdrop-blur"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[var(--g-border)] bg-[var(--g-surface)] text-[11px] font-semibold uppercase text-[var(--g-text)] "
           >
             <X className="h-3.5 w-3.5" />
             {ui.clearFilters}
@@ -531,7 +544,7 @@ export function GridTemplate({
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cyan-300/55 bg-cyan-400/20 text-[11px] font-semibold uppercase text-cyan-100 backdrop-blur"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--g-primary)]/55 bg-[color-mix(in_srgb,var(--g-primary)_16%,transparent)] text-[11px] font-semibold uppercase text-[var(--g-text)] "
           >
             {ui.backToTop}
           </button>

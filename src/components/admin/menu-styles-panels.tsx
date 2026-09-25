@@ -1,3 +1,4 @@
+import { matchMenuThemePreset } from "@/config/menu-themes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { updateTemplateAction, updateTemplateStylesAction } from "@/lib/admin/template-actions";
@@ -34,26 +35,7 @@ export function MenuStyleEditorPanel(opts: {
       },
     },
   } = opts;
-  const activePresetId =
-    primaryColor === "#ffd400" &&
-    backgroundColor === "#0d0d0d" &&
-    surfaceColor === "#1a1a1a" &&
-    textColor === "#f5f5f5" &&
-    borderColor === "#333333"
-      ? "dark-gold"
-      : primaryColor === "#111827" &&
-          backgroundColor === "#f8fafc" &&
-          surfaceColor === "#ffffff" &&
-          textColor === "#0f172a" &&
-          borderColor === "#d1d5db"
-        ? "minimal-light"
-        : primaryColor === "#f59e0b" &&
-            backgroundColor === "#1c1917" &&
-            surfaceColor === "#292524" &&
-            textColor === "#fef3c7" &&
-            borderColor === "#57534e"
-          ? "warm-bistro"
-          : null;
+  const activePresetId = matchMenuThemePreset({ primaryColor, backgroundColor, surfaceColor, textColor, borderColor });
 
   return (
     <Card>

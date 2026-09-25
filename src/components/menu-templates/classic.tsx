@@ -4,6 +4,7 @@ import { SoldOutBadge } from "@/components/menu-templates/sold-out-badge";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type CSSProperties } from "react";
+import { Flame, Leaf, Sprout, Star } from "lucide-react";
 import { formatPrice } from "@/config/currencies";
 import { isVisibleAllergen, localizeAllergenName } from "@/lib/allergens";
 import { shouldOptimizeImageSrc } from "@/lib/images";
@@ -31,8 +32,8 @@ const uiByLocale: Record<
 > = {
   es: {
     language: "Idioma",
-    featuredSection: "Recomendados",
-    recommended: "Destacado",
+    featuredSection: "Recomendados de la casa",
+    recommended: "Recomendado",
     allergens: "Alérgenos",
     vegan: "Vegano",
     vegetarian: "Vegetariano",
@@ -40,8 +41,8 @@ const uiByLocale: Record<
   },
   en: {
     language: "Language",
-    featuredSection: "Featured",
-    recommended: "Featured",
+    featuredSection: "House favourites",
+    recommended: "Recommended",
     allergens: "Allergens",
     vegan: "Vegan",
     vegetarian: "Vegetarian",
@@ -120,6 +121,10 @@ function ItemThumbnail({
   );
 }
 
+function mutedFrom(theme?: MenuTheme) {
+  return theme ? `color-mix(in srgb, ${theme.text} 68%, ${theme.background})` : undefined;
+}
+
 function ClassicDishRow({
   item,
   locale,
@@ -143,20 +148,21 @@ function ClassicDishRow({
 }) {
   const thumb = item.images?.[0];
   const { primaryLabel, restLabels } = formatItemPriceRow(item, displayCurrency, locale);
-  const dietBits = [
-    item.isVegan ? ui.vegan : null,
-    item.isVegetarian ? ui.vegetarian : null,
-    item.isSpicy ? ui.spicy : null,
-  ].filter(Boolean);
-  const mutedColor = theme ? `${theme.text}B3` : undefined;
+  const diet = [
+    item.isVegan ? { key: "vegan", label: ui.vegan, Icon: Leaf } : null,
+    item.isVegetarian && !item.isVegan ? { key: "veg", label: ui.vegetarian, Icon: Sprout } : null,
+    item.isSpicy ? { key: "spicy", label: ui.spicy, Icon: Flame } : null,
+  ].filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  const mutedColor = mutedFrom(theme);
   const accentColor = theme?.primary;
+  const soldOut = Boolean(item.soldOut);
 
   const allergensLine =
     canShowAllergens && item.allergens?.length
       ? (item.allergens ?? [])
           .filter((entry) => isVisibleAllergen(entry.allergen.code))
           .map((entry) => localizeAllergenName(entry.allergen.code, locale, entry.allergen.name))
-          .join(locale === "es" ? " · " : " · ")
+          .join(", ")
       : "";
 
   return (
@@ -165,77 +171,69 @@ function ClassicDishRow({
         type="button"
         onClick={() => onOpenDetail(item.id)}
         className={cn(
-          "flex w-full gap-3 rounded-xl py-4 text-left outline-none transition-colors hover:bg-muted/25 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          compact && "py-3"
+          "flex w-full gap-3.5 py-[1.125rem] text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4",
+          compact && "py-3",
+          soldOut && "opacity-60"
         )}
         style={
-          theme ? ({ ["--tw-ring-offset-color" as string]: theme.background } as CSSProperties) : undefined
+          theme
+            ? ({ ["--tw-ring-offset-color" as string]: theme.background, ["--tw-ring-color" as string]: theme.primary } as CSSProperties)
+            : undefined
         }
       >
-      <ItemThumbnail image={thumb} itemName={item.name} compact={compact} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="min-w-0 text-[15px] font-medium leading-snug sm:text-base">
-            <span>{item.name}</span>
-            <SoldOutBadge label={item.soldOut} />
-            {item.isFeatured && showFeaturedMark ? (
+        <ItemThumbnail image={thumb} itemName={item.name} compact={compact} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-4">
+            <p className="min-w-0 text-[1.0625rem] font-semibold leading-snug">
+              <span className={soldOut ? "line-through decoration-1" : undefined}>{item.name}</span>
+              <SoldOutBadge label={item.soldOut} />
+            </p>
+            {primaryLabel ? (
               <span
-                className="ml-1.5 text-[11px] font-normal text-muted-foreground"
-                style={{ color: mutedColor }}
+                className="shrink-0 text-[1.0625rem] font-semibold tabular-nums"
+                style={accentColor ? { color: accentColor } : undefined}
               >
-                · {ui.recommended}
+                {primaryLabel}
               </span>
             ) : null}
-          </p>
-          {primaryLabel ? (
-            <span
-              className="shrink-0 tabular-nums text-[15px] font-semibold sm:text-base"
-              style={accentColor ? { color: accentColor } : undefined}
+          </div>
+
+          {item.description ? (
+            <p
+              className={cn("mt-1 max-w-[62ch] text-[0.95rem] leading-[1.45]", !theme && "text-muted-foreground")}
+              style={theme ? { color: mutedColor } : undefined}
             >
-              {primaryLabel}
-            </span>
+              {item.description}
+            </p>
+          ) : null}
+
+          {restLabels.length ? (
+            <p className={cn("mt-1 text-sm tabular-nums", !theme && "text-muted-foreground")} style={theme ? { color: mutedColor } : undefined}>
+              {restLabels.join(" · ")}
+            </p>
+          ) : null}
+
+          {diet.length || (item.isFeatured && showFeaturedMark) ? (
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem]" style={theme ? { color: mutedColor } : undefined}>
+              {item.isFeatured && showFeaturedMark ? (
+                <span className="inline-flex items-center gap-1 font-medium" style={accentColor ? { color: accentColor } : undefined}>
+                  <Star className="h-3.5 w-3.5 fill-current" aria-hidden /> {ui.recommended}
+                </span>
+              ) : null}
+              {diet.map(({ key, label, Icon }) => (
+                <span key={key} className="inline-flex items-center gap-1">
+                  <Icon className="h-3.5 w-3.5" aria-hidden /> {label}
+                </span>
+              ))}
+            </p>
+          ) : null}
+
+          {allergensLine ? (
+            <p className={cn("mt-1.5 text-[0.8125rem] leading-snug", !theme && "text-muted-foreground")} style={theme ? { color: mutedColor } : undefined}>
+              <span className="font-medium">{ui.allergens}:</span> {allergensLine}
+            </p>
           ) : null}
         </div>
-
-        {item.description ? (
-          <p
-            className={cn(
-              "mt-1 text-[13px] leading-relaxed sm:text-sm",
-              theme ? "text-muted-foreground" : "text-foreground/80"
-            )}
-            style={theme ? { color: mutedColor } : undefined}
-          >
-            {item.description}
-          </p>
-        ) : null}
-
-        {restLabels.length ? (
-          <p
-            className={cn("mt-1 text-[12px] tabular-nums", theme ? "text-muted-foreground" : "text-foreground/72")}
-            style={theme ? { color: mutedColor } : undefined}
-          >
-            {restLabels.join(" · ")}
-          </p>
-        ) : null}
-
-        {dietBits.length ? (
-          <p
-            className={cn("mt-1.5 text-[11px]", theme ? "text-muted-foreground/90" : "text-foreground/70")}
-            style={theme ? { color: mutedColor } : undefined}
-          >
-            {dietBits.join(" · ")}
-          </p>
-        ) : null}
-
-        {allergensLine ? (
-          <p
-            className={cn("mt-1.5 text-[11px] leading-relaxed", theme ? "text-muted-foreground/85" : "text-foreground/68")}
-            style={theme ? { color: mutedColor } : undefined}
-          >
-            <span className="font-medium">{ui.allergens}:</span> {allergensLine}
-          </p>
-        ) : null}
-      </div>
       </button>
     </li>
   );
@@ -249,6 +247,7 @@ export function ClassicTemplate({
   theme,
   canShowAllergens = false,
   initialCurrency,
+  embedded = false,
 }: {
   title: string;
   categories: ReadonlyArray<MenuCategory>;
@@ -257,6 +256,8 @@ export function ClassicTemplate({
   theme?: MenuTheme;
   canShowAllergens?: boolean;
   initialCurrency?: string;
+  /** Rendered inside PublicMenuShell: no own header or card chrome, sections are anchor targets. */
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -309,11 +310,14 @@ export function ClassicTemplate({
   return (
     <div
       className={cn(
-        "mx-auto max-w-2xl rounded-2xl border border-border/45 px-4 pb-6 pt-5 sm:px-6",
-        !theme && "border-border/50 bg-card/30"
+        embedded
+          ? "px-5 pb-6 sm:px-8"
+          : "mx-auto max-w-2xl rounded-2xl border border-border/45 px-4 pb-6 pt-5 sm:px-6",
+        !embedded && !theme && "border-border/50 bg-card/30"
       )}
-      style={shellStyle}
+      style={embedded ? undefined : shellStyle}
     >
+      {embedded ? null : (
       <header
         className={cn(
           "mb-8 border-b border-border/30 pb-5",
@@ -361,8 +365,46 @@ export function ClassicTemplate({
           ) : null}
         </div>
       </header>
+      )}
 
-      {showFeaturedBlock ? (
+      {showFeaturedBlock && embedded ? (
+        <section className="-mx-5 mb-4 pt-4 sm:-mx-8" aria-labelledby="classic-featured-heading">
+          <h2 id="classic-featured-heading" className="px-5 font-display text-xl font-bold tracking-[-0.015em] sm:px-8">
+            {ui.featuredSection}
+          </h2>
+          <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
+            {featuredItems.map(({ item }) => {
+              const { primaryLabel } = formatItemPriceRow(item, displayCurrency, locale);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setDetailItemId(item.id)}
+                  className="flex w-[72%] max-w-[17rem] shrink-0 snap-start flex-col justify-between rounded-[14px] border p-4 text-left outline-none focus-visible:ring-2"
+                  style={theme ? { backgroundColor: theme.surface, borderColor: theme.border } : undefined}
+                >
+                  <span className="block">
+                    <span className="block font-semibold leading-snug">
+                      {item.name}
+                      <SoldOutBadge label={item.soldOut} />
+                    </span>
+                    {item.description ? (
+                      <span className="mt-1 line-clamp-2 block text-sm leading-snug" style={theme ? { color: mutedFrom(theme) } : undefined}>
+                        {item.description}
+                      </span>
+                    ) : null}
+                  </span>
+                  {primaryLabel ? (
+                    <span className="mt-3 block font-semibold tabular-nums" style={theme ? { color: theme.primary } : undefined}>
+                      {primaryLabel}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : showFeaturedBlock ? (
         <section className={cn("mb-10 scroll-mt-20", compact && "mb-8")} aria-labelledby="classic-featured-heading">
           <div
             className="mb-4 flex flex-col gap-1 border-b border-border/25 pb-2"
@@ -394,22 +436,27 @@ export function ClassicTemplate({
         </section>
       ) : null}
 
-      <div className="space-y-10 sm:space-y-12">
+      <div className={embedded ? "space-y-9" : "space-y-10 sm:space-y-12"}>
         {visibleCategories.map((category) => (
-          <section key={category.id} className="scroll-mt-20">
-            <div
-              className="mb-4 flex flex-col gap-1 border-b border-border/25 pb-2"
-              style={dividerColor ? { borderColor: dividerColor } : undefined}
-            >
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                {category.name}
-              </h2>
+          <section
+            key={category.id}
+            id={`sec-${category.id}`}
+            data-menu-section={category.id}
+            className="scroll-mt-20 pt-5"
+          >
+            <div className="mb-1">
+              <h2 className="font-display text-[1.6rem] font-bold leading-tight tracking-[-0.02em]">{category.name}</h2>
               {category.description ? (
-                <p className="whitespace-pre-line text-sm font-normal leading-snug text-muted-foreground/90">{category.description}</p>
+                <p
+                  className={cn("mt-1 whitespace-pre-line text-[0.95rem] leading-snug", !theme && "text-muted-foreground")}
+                  style={theme ? { color: mutedFrom(theme) } : undefined}
+                >
+                  {category.description}
+                </p>
               ) : null}
             </div>
 
-            <ul className="divide-y divide-border/20">
+            <ul className="divide-y divide-border">
               {category.items.map((item) => (
                 <ClassicDishRow
                   key={item.id}
@@ -419,7 +466,7 @@ export function ClassicTemplate({
                   canShowAllergens={canShowAllergens}
                   ui={ui}
                   compact={compact}
-                  showFeaturedMark={Boolean(item.isFeatured && !showFeaturedBlock)}
+                  showFeaturedMark={Boolean(item.isFeatured)}
                   theme={theme}
                   onOpenDetail={setDetailItemId}
                 />

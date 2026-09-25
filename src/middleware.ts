@@ -10,6 +10,13 @@ function isMarketingLocalePrefixedPath(pathname: string) {
   return locales.some((loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`));
 }
 
+/** Public menus carry their own venue theme; the root layout must not apply the admin light/dark mode. */
+function publicMenuHeaders(req: NextRequest) {
+  const headers = new Headers(req.headers);
+  headers.set("x-menuly-surface", "public-menu");
+  return headers;
+}
+
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const { isApp, tenantSlug } = parseHost(req.headers.get("host"));
@@ -35,7 +42,7 @@ export default function middleware(req: NextRequest) {
   ) {
     const rewriteUrl = new URL(req.url);
     rewriteUrl.pathname = `/_menu/${tenantSlug}${url.pathname === "/" ? "" : url.pathname}`;
-    return NextResponse.rewrite(rewriteUrl);
+    return NextResponse.rewrite(rewriteUrl, { request: { headers: publicMenuHeaders(req) } });
   }
 
   // 2) Admin via app.* subdomain → rewrite "/" to "/app"
@@ -61,6 +68,9 @@ export default function middleware(req: NextRequest) {
     url.pathname.startsWith("/_menu/") ||
     url.pathname.startsWith("/api");
 
+  if (url.pathname.startsWith("/m/") || url.pathname.startsWith("/_menu/")) {
+    return NextResponse.next({ request: { headers: publicMenuHeaders(req) } });
+  }
   if (skip) return NextResponse.next();
 
   return intlMiddleware(req);

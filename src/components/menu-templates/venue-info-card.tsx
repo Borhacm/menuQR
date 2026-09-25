@@ -2,8 +2,8 @@ import { Clock, Instagram, MapPin, MessageCircle, Phone, Star, Wifi } from "luci
 import { instagramLink, safeHttpUrl, whatsappLink, type VenueInfo } from "@/lib/venue/venue-info";
 
 const labels = {
-  es: { title: "Información del local", hours: "Horario", call: "Llamar", whatsapp: "WhatsApp", reviews: "Déjanos una reseña", wifi: "Wifi", password: "Contraseña", map: "Cómo llegar" },
-  en: { title: "Venue info", hours: "Opening hours", call: "Call", whatsapp: "WhatsApp", reviews: "Leave us a review", wifi: "Wifi", password: "Password", map: "Directions" },
+  es: { title: "Visítanos", hours: "Horario", call: "Llamar", whatsapp: "WhatsApp", reviews: "Déjanos una reseña", wifi: "Wifi", password: "Contraseña", map: "Cómo llegar" },
+  en: { title: "Visit us", hours: "Opening hours", call: "Call", whatsapp: "WhatsApp", reviews: "Leave us a review", wifi: "Wifi", password: "Password", map: "Directions" },
 };
 
 export function VenueInfoCard({
@@ -27,35 +27,35 @@ export function VenueInfoCard({
   if (!hasAnything) return null;
 
   const linkClass =
-    "inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted";
+    "inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[var(--menu-border,currentColor)] px-3.5 py-2 text-sm font-medium hover:bg-[var(--menu-surface)]";
 
   return (
-    <section aria-labelledby="venue-info-title" className="mt-8 space-y-4 rounded-xl border border-border bg-card/60 p-4 text-sm">
-      <h2 id="venue-info-title" className="text-base font-semibold text-foreground">{t.title}</h2>
+    <section aria-labelledby="venue-info-title" className="mt-10 space-y-4 rounded-[14px] border border-[var(--menu-border)] bg-[var(--menu-surface)] p-5 text-[0.95rem]">
+      <h2 id="venue-info-title" className="font-display text-xl font-bold tracking-[-0.015em]">{t.title}</h2>
       {venue.hours ? (
-        <div className="flex gap-2 text-muted-foreground">
+        <div className="flex gap-2 text-[var(--menu-muted)]">
           <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <div>
-            <p className="font-medium text-foreground">{t.hours}</p>
+            <p className="font-medium text-[var(--menu-text)]">{t.hours}</p>
             <p className="whitespace-pre-line">{venue.hours}</p>
           </div>
         </div>
       ) : null}
       {address ? (
-        <div className="flex gap-2 text-muted-foreground">
+        <div className="flex gap-2 text-[var(--menu-muted)]">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>{address}</p>
         </div>
       ) : null}
       {venue.wifiName ? (
-        <div className="flex gap-2 text-muted-foreground">
+        <div className="flex gap-2 text-[var(--menu-muted)]">
           <Wifi className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
-            <span className="font-medium text-foreground">{t.wifi}:</span> {venue.wifiName}
+            <span className="font-medium text-[var(--menu-text)]">{t.wifi}:</span> {venue.wifiName}
             {venue.wifiPassword ? (
               <>
                 {" · "}
-                {t.password}: <span className="font-mono text-foreground select-all">{venue.wifiPassword}</span>
+                {t.password}: <span className="font-mono text-[var(--menu-text)] select-all">{venue.wifiPassword}</span>
               </>
             ) : null}
           </p>

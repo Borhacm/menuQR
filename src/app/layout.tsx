@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/config/brand";
 import { resolveAbsoluteSiteOrigin } from "@/lib/utils";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 
 // Same type system as bocal.online: Inter for text, Bricolage Grotesque for headings.
@@ -42,7 +42,9 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
-  const theme = cookieStore.get("APP_THEME")?.value === "light" ? "light" : "dark";
+  const isPublicMenu = (await headers()).get("x-menuly-surface") === "public-menu";
+  // Public menus use the venue theme (see menuThemeVars), never the admin light/dark preference.
+  const theme = isPublicMenu ? "light" : cookieStore.get("APP_THEME")?.value === "light" ? "light" : "dark";
   const locale = await getLocale();
   return (
     <html

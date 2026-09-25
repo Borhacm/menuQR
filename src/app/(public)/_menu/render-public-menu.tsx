@@ -1,3 +1,4 @@
+import { DEFAULT_MENU_THEME } from "@/config/menu-themes";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ClassicTemplate } from "@/components/menu-templates/classic";
@@ -5,7 +6,9 @@ import { ModernTemplate } from "@/components/menu-templates/modern";
 import { GridTemplate } from "@/components/menu-templates/grid";
 import { canUseTemplates, hasAllergenFeature, maxPhotosPerItem } from "@/config/plans";
 import { VenueInfoCard } from "@/components/menu-templates/venue-info-card";
-import { MenuSearch } from "@/components/menu-templates/menu-search";
+import { PublicMenuShell } from "@/components/menu-templates/public-menu-shell";
+import { menuThemeVars } from "@/components/menu-templates/menu-theme-vars";
+import { getMarketingSiteUrl } from "@/config/marketing-site-url";
 import {
   describeSectionSchedule,
   isSectionOpen,
@@ -51,11 +54,11 @@ function contrastRatio(a: string, b: string) {
 function getTheme(themeJson: unknown) {
   const theme = themeJson && typeof themeJson === "object" ? (themeJson as Record<string, unknown>) : {};
   const resolved = {
-    primary: typeof theme.primary === "string" ? theme.primary : "#ffd400",
-    background: typeof theme.background === "string" ? theme.background : "#0d0d0d",
-    surface: typeof theme.surface === "string" ? theme.surface : "#1a1a1a",
-    text: typeof theme.text === "string" ? theme.text : "#f5f5f5",
-    border: typeof theme.border === "string" ? theme.border : "#333333",
+    primary: typeof theme.primary === "string" ? theme.primary : DEFAULT_MENU_THEME.primaryColor,
+    background: typeof theme.background === "string" ? theme.background : DEFAULT_MENU_THEME.backgroundColor,
+    surface: typeof theme.surface === "string" ? theme.surface : DEFAULT_MENU_THEME.surfaceColor,
+    text: typeof theme.text === "string" ? theme.text : DEFAULT_MENU_THEME.textColor,
+    border: typeof theme.border === "string" ? theme.border : DEFAULT_MENU_THEME.borderColor,
     fontFamily: typeof theme.fontFamily === "string" ? theme.fontFamily : "Inter",
     density: typeof theme.density === "string" ? theme.density : "comfortable",
   };
@@ -197,60 +200,79 @@ export async function renderPublicMenuPage({
     : "classic";
   const resolvedInitialCurrency =
     typeof qs.currency === "string" && qs.currency.trim() ? qs.currency.trim().toUpperCase() : resource.defaultCurrency;
+  const es = locale === "es";
   return (
-    <main className="container mx-auto max-w-4xl px-4 py-6">
+    <main className="min-h-dvh" style={menuThemeVars(theme)}>
       <MenuTracker resourceId={resource.id} locale={locale} />
-      <section className="mb-4 rounded-xl border border-border bg-card/60 p-3 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">{resource.name}</p>
-        <p>
-          {locale === "es"
-            ? "Información de alérgenos visible en etiquetas. Ante alergias severas, confirma con el personal."
-            : "Allergen information is shown with labels. For severe allergies, confirm with staff."}
-        </p>
-      </section>
-      <MenuSearch categories={translatedCategories} locale={locale} currency={resolvedInitialCurrency}>
-        {template === "modern" ? (
-          <ModernTemplate
-            title={translatedTitle}
-            categories={translatedCategories}
+      <div className="mx-auto max-w-2xl">
+        <PublicMenuShell
+          title={translatedTitle}
+          locale={locale}
+          locales={locales}
+          categories={translatedCategories}
+          currency={resolvedInitialCurrency}
+          sectionNav={template === "classic"}
+        >
+          {template === "modern" ? (
+            <ModernTemplate
+              title={translatedTitle}
+              categories={translatedCategories}
+              locale={locale}
+              locales={locales}
+              theme={theme}
+              canShowAllergens={canShowAllergens}
+              initialCurrency={resolvedInitialCurrency}
+              embedded
+              analytics={{
+                resourceId: resource.id,
+                enableItemTracking: analyticsSettings.itemTrackingEnabled || enableItemAnalyticsTracking,
+              }}
+            />
+          ) : template === "grid" ? (
+            <GridTemplate
+              title={translatedTitle}
+              categories={translatedCategories}
+              locale={locale}
+              locales={locales}
+              theme={theme}
+              canShowAllergens={canShowAllergens}
+              initialCurrency={resolvedInitialCurrency}
+              embedded
+            />
+          ) : (
+            <ClassicTemplate
+              title={translatedTitle}
+              categories={translatedCategories}
+              locale={locale}
+              locales={locales}
+              theme={theme}
+              canShowAllergens={canShowAllergens}
+              initialCurrency={resolvedInitialCurrency}
+              embedded
+            />
+          )}
+        </PublicMenuShell>
+        <div className="px-5 pb-12 sm:px-8">
+          <VenueInfoCard
+            venue={readVenueInfo(resource.socialJson)}
+            phone={resource.contactPhone}
+            address={resource.contactAddress}
             locale={locale}
-            locales={locales}
-            theme={theme}
-            canShowAllergens={canShowAllergens}
-            initialCurrency={resolvedInitialCurrency}
-            analytics={{
-              resourceId: resource.id,
-              enableItemTracking: analyticsSettings.itemTrackingEnabled || enableItemAnalyticsTracking,
-            }}
           />
-        ) : template === "grid" ? (
-          <GridTemplate
-            title={translatedTitle}
-            categories={translatedCategories}
-            locale={locale}
-            locales={locales}
-            theme={theme}
-            canShowAllergens={canShowAllergens}
-            initialCurrency={resolvedInitialCurrency}
-          />
-        ) : (
-          <ClassicTemplate
-            title={translatedTitle}
-            categories={translatedCategories}
-            locale={locale}
-            locales={locales}
-            theme={theme}
-            canShowAllergens={canShowAllergens}
-            initialCurrency={resolvedInitialCurrency}
-          />
-        )}
-      </MenuSearch>
-      <VenueInfoCard
-        venue={readVenueInfo(resource.socialJson)}
-        phone={resource.contactPhone}
-        address={resource.contactAddress}
-        locale={locale}
-      />
+          <footer className="mt-8 space-y-3 border-t border-[var(--menu-border)] pt-5 text-[0.8125rem] leading-relaxed text-[var(--menu-muted)]">
+            <p>
+              {es
+                ? "Si tienes alguna alergia o intolerancia, avisa al personal antes de pedir."
+                : "If you have an allergy or intolerance, please tell our staff before ordering."}
+            </p>
+            <p>
+              <a href={getMarketingSiteUrl()} className="underline decoration-[var(--menu-border)] underline-offset-4 hover:text-[var(--menu-text)]">
+                {es ? "Carta digital con Menuly" : "Digital menu by Menuly"}
+              </a>
+            </p>
+          </footer>
+        </div>
+      </div>
     </main>
   );
 }

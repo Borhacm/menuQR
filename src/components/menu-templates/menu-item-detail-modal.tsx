@@ -164,7 +164,7 @@ function ItemPhotoCarousel({
 
   const navBtnClass =
     variant === "grid"
-      ? "rounded-full border border-white/35 bg-slate-900/85 p-1.5 text-white shadow-md backdrop-blur hover:bg-slate-800/90"
+      ? "rounded-full border border-border bg-card p-1.5 text-foreground shadow-md backdrop-blur hover:bg-card"
       : variant === "classic"
         ? "rounded-full border border-border/60 bg-background/95 p-1.5 text-foreground shadow-md backdrop-blur hover:bg-muted/80"
         : cn(
@@ -176,7 +176,7 @@ function ItemPhotoCarousel({
 
   const dotActive =
     variant === "grid"
-      ? "bg-cyan-300"
+      ? "bg-primary"
       : variant === "classic"
         ? "bg-primary"
         : theme
@@ -184,7 +184,7 @@ function ItemPhotoCarousel({
           : "bg-primary";
 
   const dotInactive =
-    variant === "grid" ? "bg-white/35" : variant === "classic" ? "bg-muted-foreground/35" : "bg-muted-foreground/40";
+    variant === "grid" ? "bg-muted-foreground/35" : variant === "classic" ? "bg-muted-foreground/35" : "bg-muted-foreground/40";
 
   return (
     <div className="relative mb-3">
@@ -364,28 +364,28 @@ export function MenuItemDetailModal({
 
   const chipClass =
     variant === "grid"
-      ? "rounded-full border border-white/25 bg-slate-800/70 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-200"
+      ? "rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-semibold uppercase text-foreground"
       : variant === "classic"
         ? "rounded-full border border-border/50 bg-muted/40 px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground"
         : "rounded-full border border-border/80 bg-card/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground";
 
   const closeBtnClass =
     variant === "grid"
-      ? "rounded-md border border-white/30 bg-slate-800/80 p-1 text-slate-200 hover:bg-slate-700/80"
+      ? "rounded-md border border-border bg-card p-1 text-foreground hover:bg-card"
       : variant === "classic"
         ? "rounded-md border border-border/60 bg-background/90 p-1 text-foreground hover:bg-muted/80"
         : cn("rounded-md border border-border/60 bg-background/90 p-1 hover:bg-muted/80");
 
   const headingMuted =
     variant === "grid"
-      ? "text-cyan-200/80"
+      ? "text-muted-foreground"
       : variant === "classic"
         ? "text-muted-foreground"
         : "text-muted-foreground";
 
   const priceBadgeClass =
     variant === "grid"
-      ? "inline-block rounded-lg border border-cyan-300/55 bg-cyan-400/20 px-2.5 py-1 text-sm font-semibold text-cyan-100"
+      ? "inline-block rounded-lg border border-primary bg-primary/15 px-2.5 py-1 text-sm font-semibold text-foreground"
       : variant === "classic"
         ? "inline-block rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-sm font-semibold"
         : "inline-flex rounded-full border border-border/80 bg-card/70 px-2.5 py-1 text-sm font-semibold text-muted-foreground";
@@ -413,7 +413,7 @@ export function MenuItemDetailModal({
         className={cn(
           "mx-auto my-10 w-full max-w-xl border shadow-2xl backdrop-blur sm:rounded-2xl",
           variant === "grid"
-            ? "rounded-2xl border-white/25 bg-slate-900/95 p-3"
+            ? "rounded-2xl border-border bg-card p-3"
             : variant === "classic"
               ? "rounded-2xl border-border/60 bg-card/95 p-4"
               : "rounded-[22px] border-border/80 bg-background/95 p-4"
@@ -439,7 +439,7 @@ export function MenuItemDetailModal({
               id={titleId}
               className={cn(
                 "text-xl font-semibold leading-tight",
-                variant === "grid" ? "text-white" : variant === "classic" ? "" : ""
+                variant === "grid" ? "text-foreground" : variant === "classic" ? "" : ""
               )}
               style={
                 variant === "modern" && theme
@@ -485,7 +485,7 @@ export function MenuItemDetailModal({
           <p
             className={cn(
               "mb-3 text-sm leading-relaxed",
-              variant === "grid" ? "font-medium text-slate-200" : "text-muted-foreground"
+              variant === "grid" ? "font-medium text-foreground" : "text-muted-foreground"
             )}
             style={
               variant === "modern" && theme
@@ -538,7 +538,7 @@ export function MenuItemDetailModal({
           )}
           {restLabels.length ? (
             <span
-              className={cn("text-xs tabular-nums", variant === "grid" ? "text-slate-400" : "text-muted-foreground")}
+              className={cn("text-xs tabular-nums", variant === "grid" ? "text-muted-foreground" : "text-muted-foreground")}
             >
               {restLabels.join(" · ")}
             </span>

@@ -39,7 +39,7 @@ const uiByLocale: Record<
 > = {
   es: {
     noItems: "Sin productos en esta categoría.",
-    featuredOnly: "Recomendaciones del chef",
+    featuredOnly: "Recomendados de la casa",
     noResults: "No encontramos resultados para los filtros seleccionados.",
     vegan: "Vegano",
     vegetarian: "Vegetariano",
@@ -51,7 +51,7 @@ const uiByLocale: Record<
   },
   en: {
     noItems: "No items in this category yet.",
-    featuredOnly: "Chef recommendations",
+    featuredOnly: "House favourites",
     noResults: "No results found for selected filters.",
     vegan: "Vegan",
     vegetarian: "Vegetarian",
@@ -153,6 +153,7 @@ export function QrMenuTemplate({
   canShowAllergens = false,
   analytics,
   initialCurrency,
+  embedded = false,
 }: {
   title: string;
   locale: string;
@@ -165,6 +166,8 @@ export function QrMenuTemplate({
     enableItemTracking?: boolean;
   };
   initialCurrency?: string;
+  /** Inside PublicMenuShell: no own header, no card chrome or decorative glows. */
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -403,7 +406,11 @@ export function QrMenuTemplate({
 
   return (
     <div
-      className="relative overflow-hidden rounded-[30px] border border-border/70 bg-background/95 p-4 shadow-[0_26px_64px_-38px_rgba(0,0,0,0.55)] sm:p-5"
+      className={
+        embedded
+          ? "relative px-5 pb-4 sm:px-8"
+          : "relative overflow-hidden rounded-[30px] border border-border/70 bg-background/95 p-4 shadow-[0_26px_64px_-38px_rgba(0,0,0,0.55)] sm:p-5"
+      }
       style={
         theme
           ? ({
@@ -418,9 +425,14 @@ export function QrMenuTemplate({
           : undefined
       }
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-15%,hsl(var(--primary)/0.14),transparent_68%)]" />
-      <div className="pointer-events-none absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent" />
+      {embedded ? null : (
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-15%,hsl(var(--primary)/0.14),transparent_68%)]" />
+          <div className="pointer-events-none absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent" />
+        </>
+      )}
       <div className={cn("relative space-y-4.5", theme?.density === "compact" ? "text-sm" : "")}>
+        {embedded ? null : (
         <div className="grid grid-cols-1 gap-3 rounded-2xl border border-border/70 bg-card/45 p-3 backdrop-blur-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
           <div className="min-w-0 pr-1">
             <div className="mb-1">
@@ -460,25 +472,11 @@ export function QrMenuTemplate({
             </label>
           ) : null}
         </div>
-
-        <FilterBar
-          showSpicyFilter={showSpicyFilter}
-          dietFilterChips={dietFilterChips}
-          dietFilters={dietFilters}
-          onToggleDietFilter={handleToggleDietFilter}
-          ui={ui}
-          excludedAllergenCode={excludedAllergenCode}
-          onExcludeAllergenChange={handleExcludeAllergenChange}
-          allergenCodes={allergenCodes}
-          locale={locale}
-          theme={theme}
-        />
+        )}
 
         {featuredItems.length > 0 ? (
           <section className="space-y-2.5">
-            <p className="px-1 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground/90">
-              {ui.featuredOnly}
-            </p>
+            <h2 className="px-1 font-display text-lg font-bold tracking-[-0.015em]">{ui.featuredOnly}</h2>
             <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5">
               {featuredItems.map((item) => {
                 const selectedPrice =
@@ -528,6 +526,19 @@ export function QrMenuTemplate({
           categories={categories}
           activeCategoryId={activeCategory?.id ?? ""}
           onCategoryChange={handleCategoryChange}
+          theme={theme}
+        />
+
+        <FilterBar
+          showSpicyFilter={showSpicyFilter}
+          dietFilterChips={dietFilterChips}
+          dietFilters={dietFilters}
+          onToggleDietFilter={handleToggleDietFilter}
+          ui={ui}
+          excludedAllergenCode={excludedAllergenCode}
+          onExcludeAllergenChange={handleExcludeAllergenChange}
+          allergenCodes={allergenCodes}
+          locale={locale}
           theme={theme}
         />
 

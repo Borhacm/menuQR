@@ -5,48 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { DEFAULT_MENU_THEME, MENU_THEME_PRESETS, type MenuThemeColors } from "@/config/menu-themes";
 
-type ThemeValues = {
-  primaryColor: string;
-  backgroundColor: string;
-  surfaceColor: string;
-  textColor: string;
-  borderColor: string;
-};
+type ThemeValues = MenuThemeColors;
 
-const DEFAULT_THEME: ThemeValues = {
-  primaryColor: "#ffd400",
-  backgroundColor: "#0d0d0d",
-  surfaceColor: "#1a1a1a",
-  textColor: "#f5f5f5",
-  borderColor: "#333333",
-};
+const DEFAULT_THEME: ThemeValues = DEFAULT_MENU_THEME;
 
-const PRESETS: Array<{ id: string; label: string; values: ThemeValues }> = [
-  { id: "dark-gold", label: "Dark Gold", values: DEFAULT_THEME },
-  {
-    id: "minimal-light",
-    label: "Minimal Light",
-    values: {
-      primaryColor: "#111827",
-      backgroundColor: "#f8fafc",
-      surfaceColor: "#ffffff",
-      textColor: "#0f172a",
-      borderColor: "#d1d5db",
-    },
-  },
-  {
-    id: "warm-bistro",
-    label: "Warm Bistro",
-    values: {
-      primaryColor: "#f59e0b",
-      backgroundColor: "#1c1917",
-      surfaceColor: "#292524",
-      textColor: "#fef3c7",
-      borderColor: "#57534e",
-    },
-  },
-];
+const PRESETS = MENU_THEME_PRESETS;
 
 export function ThemeControls({
   initialValues,
@@ -273,7 +238,7 @@ export function ThemeControls({
                 size="sm"
                 onClick={() => {
                   setValues(DEFAULT_THEME);
-                  setActivePresetId("dark-gold");
+                  setActivePresetId("paper");
                 }}
               >
                 {labels.restoreDefault}

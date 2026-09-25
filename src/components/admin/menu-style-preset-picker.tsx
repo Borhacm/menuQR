@@ -4,8 +4,9 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 
 const PRESET_OPTIONS = [
-  { id: "dark-gold", label: "Dark Gold" },
+  { id: "paper", label: "Papel" },
   { id: "minimal-light", label: "Minimal Light" },
+  { id: "dark-gold", label: "Dark Gold" },
   { id: "warm-bistro", label: "Warm Bistro" },
 ] as const;
 
