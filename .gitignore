@@ -48,3 +48,7 @@ next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
 .e2e-tmp/
+
+# Local tooling: Cursor debug logs and Playwright output/auth state (never commit)
+.cursor/
+test-results/
